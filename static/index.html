@@ -1,0 +1,4156 @@
+﻿<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Artista Amara | Latte Art Path Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,600;1,6..72,400;1,6..72,600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #271310;
+      --primary-container: #3e2723;
+      --surface: #faf9f5;
+      --outline-ghost: rgba(211, 195, 192, 0.18);
+      --text-soft: rgba(250, 249, 245, 0.74);
+      --shadow: rgba(13, 5, 4, 0.3);
+      --radius: 14px;
+      --radius-sm: 10px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      color-scheme: dark;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100dvh;
+      font-family: "Manrope", system-ui, sans-serif;
+      color: var(--surface);
+      background:
+        radial-gradient(circle at top right, rgba(199, 123, 60, 0.26), transparent 22rem),
+        radial-gradient(circle at -10% 18%, rgba(255, 241, 220, 0.12), transparent 16rem),
+        linear-gradient(180deg, #180907 0%, #271310 26%, #3a211c 100%);
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      pointer-events: none;
+      border-radius: 50%;
+      filter: blur(24px);
+      z-index: 0;
+    }
+
+    body::before {
+      width: 14rem;
+      height: 14rem;
+      top: -4rem;
+      right: -4rem;
+      background: rgba(255, 230, 200, 0.08);
+    }
+
+    body::after {
+      width: 10rem;
+      height: 10rem;
+      left: -3rem;
+      top: 18rem;
+      background: rgba(255, 194, 142, 0.08);
+    }
+
+    img {
+      display: block;
+      max-width: 100%;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    main {
+      width: min(100%, 28rem);
+      margin: 0 auto;
+      padding: 1.15rem 1rem 6.75rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .brand-header {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      padding-top: 0.35rem;
+    }
+
+    .logo-wrap {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.95rem 1.15rem;
+      border-radius: var(--radius);
+      background: rgba(250, 249, 245, 0.92);
+      box-shadow:
+        0 28px 40px -32px var(--shadow),
+        inset 0 0 0 1px var(--outline-ghost);
+      margin-bottom: 1rem;
+    }
+
+    .logo-wrap img {
+      width: min(12rem, 58vw);
+      height: auto;
+    }
+
+    .eyebrow {
+      margin: 0 0 0.55rem;
+      font-size: 0.73rem;
+      letter-spacing: 0.26em;
+      text-transform: uppercase;
+      color: rgba(255, 242, 224, 0.72);
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      font-family: "Newsreader", Georgia, serif;
+      letter-spacing: -0.04em;
+    }
+
+    .brand-header h1 {
+      font-size: clamp(2.6rem, 9vw, 4rem);
+      line-height: 0.92;
+      max-width: 10ch;
+      margin: 0 auto 0.8rem;
+    }
+
+    .brand-copy {
+      margin: 0 auto;
+      max-width: 32ch;
+      line-height: 1.55;
+      color: var(--text-soft);
+      font-size: 0.98rem;
+    }
+
+    .panel {
+      border-radius: var(--radius);
+      padding: 1.05rem;
+      margin-bottom: 1rem;
+      box-shadow:
+        0 24px 42px -34px var(--shadow),
+        inset 0 0 0 1px var(--outline-ghost);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .glass-panel {
+      border-top-left-radius: 0;
+      border-top-right-radius: 0;
+      background: rgba(250, 249, 245, 0.96);
+      color: var(--primary);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .espresso-glass {
+      background: linear-gradient(135deg, rgba(39, 19, 16, 0.96), rgba(62, 39, 35, 0.94));
+      color: var(--surface);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+    .hero-panel::after {
+      content: "";
+      position: absolute;
+      width: 8.4rem;
+      height: 8.4rem;
+      top: -2.1rem;
+      right: -2rem;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 240, 215, 0.24) 0%, rgba(255, 240, 215, 0) 72%);
+    }
+
+    .hero-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.36rem 0.65rem;
+      margin-bottom: 0.9rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.09);
+      color: rgba(255, 245, 230, 0.82);
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .hero-panel h2 {
+      font-size: 2.05rem;
+      line-height: 0.98;
+      max-width: 11ch;
+      margin-bottom: 0.7rem;
+    }
+
+    .hero-panel p {
+      margin: 0;
+      max-width: 28ch;
+      color: rgba(250, 249, 245, 0.76);
+      line-height: 1.5;
+    }
+
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.7rem;
+      margin-top: 1rem;
+    }
+
+    .stat-tile {
+      padding: 0.72rem;
+      border-radius: var(--radius-sm);
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      min-height: 5.1rem;
+    }
+
+    .stat-tile span {
+      display: block;
+      font-size: 0.69rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(255, 245, 230, 0.66);
+      margin-bottom: 0.55rem;
+    }
+
+    .stat-tile strong {
+      display: block;
+      font-size: 0.94rem;
+      line-height: 1.25;
+      color: #fffaf4;
+      word-break: break-word;
+    }
+
+    .section-head {
+      margin-bottom: 0.95rem;
+    }
+
+    .section-kicker {
+      margin: 0 0 0.35rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: rgba(39, 19, 16, 0.56);
+    }
+
+    .section-head h3 {
+      font-size: 1.6rem;
+      line-height: 0.98;
+    }
+
+    .section-subcopy {
+      margin: 0 0 0.95rem;
+      line-height: 1.5;
+      color: rgba(39, 19, 16, 0.74);
+      font-size: 0.92rem;
+      max-width: 32ch;
+    }
+
+    .upload-shell {
+      padding: 0.95rem;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(250, 248, 242, 0.78));
+      box-shadow: inset 0 0 0 1px rgba(211, 195, 192, 0.22);
+      margin-bottom: 0.9rem;
+    }
+
+    .upload-shell strong {
+      display: block;
+      font-size: 1rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .upload-shell p {
+      margin: 0;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      color: rgba(39, 19, 16, 0.7);
+    }
+
+    .upload-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 100%;
+      margin-top: 0.9rem;
+      padding: 0.98rem 1rem;
+      border-radius: var(--radius-sm);
+      background: linear-gradient(135deg, var(--primary), var(--primary-container));
+      color: #ffffff;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-size: 0.78rem;
+      box-shadow: 0 20px 28px -22px rgba(39, 19, 16, 0.8);
+    }
+
+    .upload-button input {
+      display: none;
+    }
+
+    .mode-tabs {
+      display: flex;
+      align-items: flex-end;
+      margin-bottom: -0.18rem;
+      width: 100%;
+      padding: 0;
+      position: relative;
+      z-index: 2;
+      overflow: hidden;
+      transform: translateZ(0);
+    }
+
+    .mode-tab {
+      position: relative;
+      flex: 1 1 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.45rem;
+      min-height: 3.05rem;
+      padding: 0.82rem 0.8rem 0.74rem;
+      border-radius: 0;
+      background: linear-gradient(180deg, rgba(82, 56, 49, 0.9), rgba(46, 27, 23, 0.84));
+      color: rgba(255, 243, 227, 0.74);
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+        0 18px 24px -24px rgba(13, 5, 4, 0.98);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      transition: transform 180ms ease, background-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
+      will-change: transform, opacity;
+    }
+
+    .mode-tab + .mode-tab {
+      margin-left: -1px;
+    }
+
+    .mode-tab:first-child {
+      border-top-left-radius: var(--radius);
+    }
+
+    .mode-tab:last-child {
+      border-top-right-radius: var(--radius);
+    }
+
+    .mode-tab[aria-pressed="true"] {
+      z-index: 3;
+      background: rgba(250, 249, 245, 0.96);
+      color: var(--primary);
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 255, 255, 0.62),
+        0 22px 28px -22px rgba(13, 5, 4, 0.66);
+      transform: translateY(1px);
+    }
+
+    .mode-tab:active {
+      transform: translateY(2px) scale(0.992);
+    }
+
+    .mode-tab svg {
+      width: 0.95rem;
+      height: 0.95rem;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.7;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      opacity: 0.9;
+    }
+
+    .mode-tab[aria-pressed="true"] svg {
+      opacity: 1;
+    }
+
+    .mode-panel[hidden] {
+      display: none;
+    }
+
+    .mode-panel {
+      margin-bottom: 0.9rem;
+      will-change: transform, opacity;
+    }
+
+    .mode-field {
+      display: block;
+      margin-bottom: 0.8rem;
+    }
+
+    .mode-field:last-child {
+      margin-bottom: 0;
+    }
+
+    .mode-label {
+      display: block;
+      margin-bottom: 0.45rem;
+      font-size: 0.76rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(39, 19, 16, 0.56);
+    }
+
+    .mode-input,
+    .mode-select {
+      width: 100%;
+      border: 0;
+      border-radius: var(--radius-sm);
+      background: rgba(255, 255, 255, 0.76);
+      color: var(--primary);
+      padding: 0.92rem 1rem;
+      box-shadow: inset 0 0 0 1px rgba(211, 195, 192, 0.18);
+      outline: none;
+    }
+
+    .mode-inline-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.72rem;
+    }
+
+    .preset-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.72rem;
+    }
+
+    .preset-card {
+      padding: 0.78rem;
+      border-radius: var(--radius-sm);
+      background: rgba(255, 255, 255, 0.76);
+      color: var(--primary);
+      text-align: left;
+      box-shadow: inset 0 0 0 1px rgba(211, 195, 192, 0.18);
+      transition: transform 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+    }
+
+    .preset-card[aria-pressed="true"] {
+      background: rgba(39, 19, 16, 0.08);
+      box-shadow: inset 0 0 0 1px rgba(39, 19, 16, 0.12);
+    }
+
+    .preset-card img {
+      width: 100%;
+      aspect-ratio: 1;
+      object-fit: contain;
+      border-radius: calc(var(--radius-sm) - 2px);
+      background: rgba(250, 249, 245, 0.82);
+      padding: 0.72rem;
+      margin-bottom: 0.72rem;
+    }
+
+    .preset-card strong,
+    .preset-card span {
+      display: block;
+    }
+
+    .preset-card strong {
+      font-size: 0.92rem;
+      margin-bottom: 0.18rem;
+    }
+
+    .preset-card span {
+      color: rgba(39, 19, 16, 0.58);
+      font-size: 0.8rem;
+    }
+
+    .empty-note {
+      padding: 0.92rem 1rem;
+      border-radius: var(--radius-sm);
+      background: rgba(255, 255, 255, 0.7);
+      color: rgba(39, 19, 16, 0.68);
+      line-height: 1.5;
+      box-shadow: inset 0 0 0 1px rgba(211, 195, 192, 0.16);
+    }
+
+    .control-grid {
+      display: grid;
+      gap: 0.8rem;
+    }
+
+    .control-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.8rem;
+      align-items: stretch;
+    }
+
+    .control-row .span-all {
+      grid-column: 1 / -1;
+    }
+
+    .control {
+      padding: 0.8rem 0.82rem;
+      border-radius: var(--radius-sm);
+      background: rgba(255, 255, 255, 0.58);
+      box-shadow: inset 0 0 0 1px rgba(211, 195, 192, 0.14);
+    }
+
+    .control-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-bottom: 0.55rem;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .control-header span:last-child {
+      color: rgba(39, 19, 16, 0.56);
+      font-size: 0.76rem;
+    }
+
+    .control-title {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.38rem;
+      min-width: 0;
+    }
+
+    .touch-info {
+      display: none;
+      width: 1.35rem;
+      height: 1.35rem;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: rgba(39, 19, 16, 0.08);
+      color: rgba(39, 19, 16, 0.72);
+      font-size: 0.78rem;
+      font-weight: 900;
+      line-height: 1;
+      box-shadow: inset 0 0 0 1px rgba(39, 19, 16, 0.08);
+    }
+
+    @media (pointer: coarse) {
+      .touch-info {
+        display: inline-flex;
+      }
+    }
+
+    .touch-info-popover {
+      position: fixed;
+      left: 50%;
+      bottom: 1.1rem;
+      z-index: 50;
+      width: min(21rem, calc(100vw - 2rem));
+      transform: translateX(-50%);
+      padding: 0.9rem 1rem;
+      border-radius: var(--radius-sm);
+      background: rgba(39, 19, 16, 0.96);
+      color: #fff9f3;
+      font-size: 0.9rem;
+      line-height: 1.45;
+      box-shadow: 0 22px 42px -24px rgba(39, 19, 16, 0.82);
+    }
+
+    .touch-info-popover[hidden] {
+      display: none;
+    }
+
+    .control-select {
+      width: 100%;
+      border: 0;
+      border-radius: var(--radius-sm);
+      background: rgba(255, 255, 255, 0.78);
+      color: var(--primary);
+      padding: 0.66rem 0.72rem;
+      box-shadow: inset 0 0 0 1px rgba(211, 195, 192, 0.18);
+      outline: none;
+    }
+
+    input[type="range"] {
+      appearance: none;
+      width: 100%;
+      height: 0.4rem;
+      border-radius: 999px;
+      background: rgba(39, 19, 16, 0.12);
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      appearance: none;
+      width: 1rem;
+      height: 1rem;
+      border-radius: 50%;
+      background: var(--primary);
+      box-shadow: 0 0 0 4px rgba(39, 19, 16, 0.12);
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 1rem;
+      height: 1rem;
+      border-radius: 50%;
+      border: 0;
+      background: var(--primary);
+      box-shadow: 0 0 0 4px rgba(39, 19, 16, 0.12);
+    }
+
+    .canvas-frame {
+      position: relative;
+      aspect-ratio: 1;
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow:
+        inset 0 0 0 1px rgba(211, 195, 192, 0.24),
+        0 26px 40px -34px rgba(39, 19, 16, 0.48);
+      background: linear-gradient(180deg, #fffaf2 0%, #ecdcc7 100%);
+    }
+
+    #vectorCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      touch-action: none;
+      cursor: crosshair;
+    }
+
+    .canvas-placeholder {
+      position: absolute;
+      left: 0.85rem;
+      right: 0.85rem;
+      bottom: 0.85rem;
+      padding: 0.82rem 0.9rem;
+      border-radius: var(--radius-sm);
+      background: rgba(250, 249, 245, 0.82);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      color: rgba(39, 19, 16, 0.76);
+      line-height: 1.45;
+      font-size: 0.88rem;
+      box-shadow: inset 0 0 0 1px rgba(211, 195, 192, 0.16);
+    }
+
+    .action-button-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.65rem;
+      margin-top: 0.9rem;
+    }
+
+    .tool-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.65rem;
+      margin-top: 0.9rem;
+    }
+
+    .tool-button,
+    .action-button {
+      padding: 0.88rem 0.75rem;
+      border-radius: var(--radius-sm);
+      background: rgba(39, 19, 16, 0.08);
+      color: var(--primary);
+      font-size: 0.82rem;
+      font-weight: 700;
+      transition: transform 180ms ease, opacity 180ms ease;
+      box-shadow: inset 0 0 0 1px rgba(39, 19, 16, 0.06);
+    }
+
+    .action-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.48rem;
+      min-height: 3rem;
+    }
+
+    .action-button svg {
+      width: 1.1rem;
+      height: 1.1rem;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex: 0 0 auto;
+    }
+
+    .tool-button:active,
+    .action-button:active,
+    .print-button:active,
+    .upload-button:active {
+      transform: scale(0.985);
+    }
+
+    .tool-button[disabled] {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .helper-text {
+      margin: 0.82rem 0 0;
+      color: rgba(39, 19, 16, 0.62);
+      line-height: 1.5;
+      font-size: 0.86rem;
+    }
+
+    .preview-stage {
+      position: relative;
+      aspect-ratio: 1;
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: transparent;
+      box-shadow: none;
+      will-change: transform, opacity, filter;
+    }
+
+    .preview-stage img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      user-select: none;
+      pointer-events: none;
+    }
+
+    .machine-canvas-stage canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .latte-preview-layer {
+      position: absolute;
+      width: 43.4%;
+      aspect-ratio: 1;
+      top: 49.2%;
+      left: 50.1%;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .latte-preview-layer canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      mix-blend-mode: screen;
+    }
+
+    #printPreviewCanvas {
+      opacity: 0.96;
+    }
+
+    #printHead {
+      position: absolute;
+      width: 0.85rem;
+      height: 0.85rem;
+      border-radius: 50%;
+      background: rgba(255, 248, 233, 0.95);
+      box-shadow:
+        0 0 0 6px rgba(255, 237, 200, 0.12),
+        0 0 24px rgba(255, 240, 212, 0.64);
+      transform: translate(-50%, -50%);
+      opacity: 0;
+      transition: opacity 160ms ease;
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    .preview-note {
+      position: absolute;
+      left: 0.9rem;
+      right: 0.9rem;
+      bottom: 0.9rem;
+      padding: 0.78rem 0.9rem;
+      border-radius: var(--radius-sm);
+      background: rgba(250, 249, 245, 0.76);
+      color: rgba(39, 19, 16, 0.7);
+      font-size: 0.84rem;
+      line-height: 1.45;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: inset 0 0 0 1px rgba(211, 195, 192, 0.16);
+    }
+
+    .warning-card {
+      margin-top: 0.82rem;
+      padding: 0.85rem 0.9rem;
+      border-radius: var(--radius-sm);
+      background: rgba(217, 102, 82, 0.12);
+      color: #5f241c;
+      box-shadow: inset 0 0 0 1px rgba(217, 102, 82, 0.18);
+    }
+
+    .warning-card[hidden] {
+      display: none;
+    }
+
+    .warning-stack {
+      display: grid;
+      gap: 0.62rem;
+      margin-top: 0.82rem;
+    }
+
+    .warning-stack[hidden] {
+      display: none;
+    }
+
+    .warning-card strong,
+    .warning-card span {
+      display: block;
+    }
+
+    .warning-card strong {
+      margin-bottom: 0.22rem;
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .warning-card span {
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
+
+    .machine-status .progress-meter {
+      flex: 1 0 100%;
+      margin-top: 0.35rem;
+      width: 100%;
+    }
+
+    .advanced-panel[hidden] {
+      display: none;
+    }
+
+    .advanced-grid {
+      display: grid;
+      gap: 0.82rem;
+    }
+
+    .advanced-card {
+      padding: 0.9rem;
+      border-radius: var(--radius-sm);
+      background: rgba(255, 255, 255, 0.58);
+      box-shadow: inset 0 0 0 1px rgba(211, 195, 192, 0.14);
+    }
+
+    .advanced-card strong {
+      display: block;
+      margin-bottom: 0.54rem;
+      font-size: 0.82rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .advanced-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.62rem;
+      margin-top: 0.72rem;
+    }
+
+    .advanced-button {
+      padding: 0.82rem 0.72rem;
+      border-radius: var(--radius-sm);
+      background: rgba(39, 19, 16, 0.08);
+      color: var(--primary);
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      box-shadow: inset 0 0 0 1px rgba(39, 19, 16, 0.06);
+    }
+
+    .advanced-button.primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary-container));
+      color: #ffffff;
+    }
+
+    .advanced-actions .advanced-button:only-child {
+      grid-column: 1 / -1;
+    }
+
+    .motion-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.5rem;
+    }
+
+    .motion-grid .advanced-button {
+      min-height: 2.8rem;
+      font-size: 0.86rem;
+    }
+
+    .recipe-phase-tabs {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.42rem;
+      margin: 0.62rem 0;
+    }
+
+    .recipe-phase-tab {
+      padding: 0.62rem 0.5rem;
+      border-radius: var(--radius-sm);
+      background: rgba(39, 19, 16, 0.08);
+      color: rgba(39, 19, 16, 0.72);
+      font-size: 0.68rem;
+      font-weight: 850;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .recipe-phase-tab.active {
+      background: var(--primary);
+      color: #ffffff;
+    }
+
+    .recipe-builder {
+      display: grid;
+      gap: 0.62rem;
+      max-height: 22rem;
+      overflow-y: auto;
+      padding-right: 0.25rem;
+      overscroll-behavior: contain;
+    }
+
+    .recipe-action-list {
+      display: grid;
+      gap: 0.48rem;
+    }
+
+    .recipe-action-row {
+      display: grid;
+      gap: 0.5rem;
+      padding: 0.62rem;
+      border-radius: var(--radius-sm);
+      background: rgba(39, 19, 16, 0.06);
+      box-shadow: inset 0 0 0 1px rgba(39, 19, 16, 0.06);
+    }
+
+    .recipe-action-head,
+    .recipe-action-controls,
+    .recipe-output-grid {
+      display: grid;
+      gap: 0.42rem;
+    }
+
+    .recipe-action-head {
+      grid-template-columns: 1fr auto auto auto;
+      align-items: center;
+    }
+
+    .recipe-action-head span {
+      color: var(--primary);
+      font-size: 0.72rem;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .recipe-icon-button {
+      width: 2rem;
+      height: 2rem;
+      border-radius: var(--radius-sm);
+      background: rgba(255, 255, 255, 0.48);
+      color: var(--primary);
+      font-size: 0.86rem;
+      font-weight: 900;
+      box-shadow: inset 0 0 0 1px rgba(39, 19, 16, 0.08);
+    }
+
+    .recipe-output-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .recipe-output {
+      display: grid;
+      gap: 0.34rem;
+      padding: 0.48rem;
+      border-radius: var(--radius-sm);
+      background: rgba(255, 255, 255, 0.46);
+    }
+
+    .recipe-output label {
+      display: flex;
+      align-items: center;
+      gap: 0.36rem;
+      color: rgba(39, 19, 16, 0.72);
+      font-size: 0.72rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .recipe-empty {
+      padding: 0.74rem;
+      border-radius: var(--radius-sm);
+      background: rgba(39, 19, 16, 0.05);
+      color: rgba(39, 19, 16, 0.58);
+      font-size: 0.78rem;
+      line-height: 1.35;
+    }
+
+    .recipe-nested {
+      padding-left: 0.58rem;
+      border-left: 2px solid rgba(39, 19, 16, 0.12);
+    }
+
+    .telemetry-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.62rem;
+    }
+
+    .telemetry-tile {
+      padding: 0.72rem;
+      border-radius: var(--radius-sm);
+      background: rgba(39, 19, 16, 0.06);
+    }
+
+    .telemetry-tile span,
+    .telemetry-tile strong {
+      display: block;
+    }
+
+    .telemetry-tile span {
+      margin-bottom: 0.24rem;
+      color: rgba(39, 19, 16, 0.54);
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .telemetry-tile strong {
+      color: var(--primary);
+      font-size: 0.9rem;
+      line-height: 1.35;
+      word-break: break-word;
+    }
+
+    .status-row {
+      margin-bottom: 0.7rem;
+    }
+
+    .status-row strong {
+      display: block;
+      font-size: 0.76rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(255, 243, 229, 0.62);
+      margin-bottom: 0.28rem;
+    }
+
+    .status-row p {
+      margin: 0;
+      line-height: 1.5;
+      font-size: 0.92rem;
+      color: rgba(255, 248, 240, 0.88);
+    }
+
+    .progress-meter {
+      width: 100%;
+      height: 0.46rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.12);
+      overflow: hidden;
+    }
+
+    .progress-meter span {
+      display: block;
+      width: 0%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #fff5e8, #e0c29d);
+      transition: width 180ms ease;
+    }
+
+    .action-shell {
+      position: sticky;
+      bottom: 0.9rem;
+      padding: 0.5rem;
+      border-radius: calc(var(--radius) + 2px);
+      background: rgba(250, 249, 245, 0.2);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow:
+        0 24px 42px -34px rgba(13, 5, 4, 0.95),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+      z-index: 5;
+    }
+
+    .print-button {
+      width: 100%;
+      padding: 1.05rem 1rem;
+      border-radius: var(--radius);
+      background: linear-gradient(135deg, var(--primary), var(--primary-container));
+      color: #ffffff;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      font-weight: 800;
+      font-size: 0.8rem;
+      box-shadow: 0 22px 30px -24px rgba(39, 19, 16, 0.9);
+      transition: transform 180ms ease, opacity 180ms ease, filter 180ms ease;
+    }
+
+    .print-button[disabled] {
+      opacity: 0.42;
+      cursor: not-allowed;
+      filter: saturate(0.75);
+    }
+
+    .action-copy {
+      margin: 0.7rem 0 0.1rem;
+      text-align: center;
+      color: rgba(255, 244, 227, 0.72);
+      font-size: 0.84rem;
+      line-height: 1.45;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0.7rem;
+      margin-bottom: 0.95rem;
+    }
+
+    .meta-card {
+      padding: 0.76rem;
+      border-radius: var(--radius-sm);
+      background: rgba(39, 19, 16, 0.06);
+      box-shadow: inset 0 0 0 1px rgba(39, 19, 16, 0.06);
+    }
+
+    .meta-card span {
+      display: block;
+      margin-bottom: 0.4rem;
+      color: rgba(39, 19, 16, 0.54);
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .meta-card strong {
+      display: block;
+      color: var(--primary);
+      font-size: 0.94rem;
+      line-height: 1.3;
+      word-break: break-word;
+    }
+
+    .preview-stack {
+      display: grid;
+      gap: 0.95rem;
+      margin-top: 0.95rem;
+    }
+
+    .stage-shell {
+      padding: 0.78rem;
+      border-radius: var(--radius-sm);
+      background: rgba(255, 255, 255, 0.46);
+      box-shadow: inset 0 0 0 1px rgba(211, 195, 192, 0.12);
+    }
+
+    .preview-shell {
+      padding: 0;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .preview-shell .stage-label {
+      margin-bottom: 0.5rem;
+      padding: 0 0.12rem;
+    }
+
+    .motion-rise {
+      animation: riseIn 360ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .motion-swap {
+      animation: swapIn 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .motion-pulse {
+      animation: pulseTap 260ms ease-out;
+    }
+
+    .motion-glow {
+      animation: previewGlow 520ms ease-out;
+    }
+
+    .stage-label {
+      margin-bottom: 0.6rem;
+      color: rgba(39, 19, 16, 0.56);
+      font-size: 0.73rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .vector-frame {
+      background: linear-gradient(180deg, #fff9f0 0%, #eedfcd 100%);
+    }
+
+    .control-header-tools {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.42rem;
+    }
+
+    .control-actions {
+      display: flex;
+      gap: 0.52rem;
+      align-items: center;
+      min-width: 8.85rem;
+      padding: 0.7rem;
+    }
+
+    .icon-button {
+      width: 2rem;
+      height: 2rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      background: rgba(39, 19, 16, 0.08);
+      color: var(--primary);
+      box-shadow: inset 0 0 0 1px rgba(39, 19, 16, 0.06);
+      transition: transform 180ms ease, background-color 180ms ease;
+    }
+
+    .icon-button svg {
+      width: 1rem;
+      height: 1rem;
+      stroke: currentColor;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 1.75;
+    }
+
+    .control-actions .icon-button {
+      flex: 1 1 0;
+      width: auto;
+      height: auto;
+      aspect-ratio: 1;
+      background: rgba(39, 19, 16, 0.08);
+    }
+
+    .icon-button[aria-pressed="true"] {
+      background: rgba(39, 19, 16, 0.16);
+      box-shadow: inset 0 0 0 1px rgba(39, 19, 16, 0.12);
+    }
+
+    .machine-status {
+      margin-top: 0.72rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.82rem 0.9rem;
+      border-radius: var(--radius-sm);
+      background: rgba(255, 255, 255, 0.08);
+      color: rgba(255, 245, 230, 0.86);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+      transform: translateZ(0);
+    }
+
+    .machine-dot {
+      width: 0.7rem;
+      height: 0.7rem;
+      border-radius: 50%;
+      background: rgba(255, 241, 223, 0.42);
+      box-shadow: 0 0 0 6px rgba(255, 241, 223, 0.08);
+      flex: 0 0 auto;
+    }
+
+    .machine-copy strong,
+    .machine-copy span {
+      display: block;
+    }
+
+    .machine-copy strong {
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(255, 243, 229, 0.56);
+      margin-bottom: 0.18rem;
+    }
+
+    .machine-copy span {
+      font-size: 0.9rem;
+      line-height: 1.35;
+      color: rgba(255, 248, 240, 0.9);
+    }
+
+    .machine-status[data-state="ready"] .machine-dot {
+      background: #e8d4b1;
+      box-shadow: 0 0 0 6px rgba(232, 212, 177, 0.1);
+    }
+
+    .machine-status[data-state="printing"] .machine-dot,
+    .machine-status[data-state="vectorizing"] .machine-dot {
+      background: #f4e5ca;
+      box-shadow: 0 0 0 6px rgba(244, 229, 202, 0.12);
+    }
+
+    .machine-status[data-state="printing"] {
+      animation: statusBreath 1.8s ease-in-out infinite;
+    }
+
+    .machine-status[data-state="vectorizing"] {
+      animation: statusBreath 1.5s ease-in-out infinite;
+    }
+
+    .machine-status[data-state="adjust"] .machine-dot {
+      background: #d78b5a;
+      box-shadow: 0 0 0 6px rgba(215, 139, 90, 0.1);
+    }
+
+    .machine-status[data-state="error"] .machine-dot {
+      background: #d96652;
+      box-shadow: 0 0 0 6px rgba(217, 102, 82, 0.12);
+    }
+
+    .machine-status[data-state="waiting"] .machine-dot {
+      background: rgba(255, 241, 223, 0.34);
+    }
+
+    @keyframes riseIn {
+      0% {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes swapIn {
+      0% {
+        opacity: 0;
+        transform: translateY(8px) scale(0.988);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes pulseTap {
+      0% {
+        transform: scale(1);
+      }
+      45% {
+        transform: scale(0.985);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    @keyframes previewGlow {
+      0% {
+        filter: brightness(1) saturate(1);
+      }
+      50% {
+        filter: brightness(1.04) saturate(1.04);
+      }
+      100% {
+        filter: brightness(1) saturate(1);
+      }
+    }
+
+    @keyframes statusBreath {
+      0% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.01);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    .meta-grid,
+    .tool-row,
+    .preview-note,
+    .action-copy {
+      display: none;
+    }
+
+    #machineCanvasStage[hidden] {
+      display: none;
+    }
+
+    #cupPreviewStage[hidden] {
+      display: none;
+    }
+
+    @media (max-width: 360px) {
+      .meta-grid,
+      .control-row,
+      .action-button-row,
+      .tool-row,
+      .hero-stats,
+      .mode-inline-grid,
+      .preset-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation: none !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header class="brand-header">
+      <div id="logoWrap" class="logo-wrap" role="button" tabindex="0" aria-label="Open advanced settings">
+        <img src="Artista-Amara-Logo.svg" alt="Artista Amara Logo">
+      </div>
+    </header>
+
+    <div class="mode-tabs" role="tablist" aria-label="Source mode">
+      <button id="presetTab" class="mode-tab" type="button" role="tab" aria-pressed="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M5 7h14"></path>
+          <path d="M5 12h14"></path>
+          <path d="M5 17h14"></path>
+        </svg>
+        <span>Presets</span>
+      </button>
+      <button id="textTab" class="mode-tab" type="button" role="tab" aria-pressed="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 6h16"></path>
+          <path d="M12 6v12"></path>
+          <path d="M8 18h8"></path>
+        </svg>
+        <span>Text</span>
+      </button>
+      <button id="imageTab" class="mode-tab" type="button" role="tab" aria-pressed="true">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="4" y="5" width="16" height="14" rx="2"></rect>
+          <path d="M8 14l2.6-2.6a1.2 1.2 0 0 1 1.7 0L16 15"></path>
+          <circle cx="15.5" cy="9" r="1.3"></circle>
+        </svg>
+        <span>Image Trace</span>
+      </button>
+    </div>
+
+    <section id="studioPanel" class="panel glass-panel">
+      <div class="section-head">
+        <p class="section-kicker">Latte Art Studio</p>
+        <h3>Source &amp; Preview</h3>
+      </div>
+      <div id="presetPanel" class="mode-panel upload-shell" hidden>
+        <strong>Presets</strong>
+        <p>Choose a predefined Latte Art Shape.</p>
+        <div id="presetGrid" class="preset-grid" aria-live="polite"></div>
+      </div>
+      <div id="textPanel" class="mode-panel upload-shell" hidden>
+        <label class="mode-field">
+          <span class="mode-label">Text</span>
+          <input id="textInput" class="mode-input" type="text" maxlength="22" value="AMARA" placeholder="Enter text">
+        </label>
+        <div class="mode-inline-grid">
+          <label class="mode-field">
+            <span class="mode-label">Font</span>
+            <select id="textFont" class="mode-select">
+              <option value="Newsreader">Newsreader</option>
+              <option value="Manrope">Manrope</option>
+            </select>
+          </label>
+          <label class="mode-field">
+            <span class="mode-label">Weight</span>
+            <select id="textWeight" class="mode-select">
+              <option value="700">Bold</option>
+              <option value="600">Semi Bold</option>
+              <option value="800">Extra Bold</option>
+            </select>
+          </label>
+        </div>
+      </div>
+      <div id="imagePanel" class="mode-panel upload-shell">
+        <strong id="uploadFileName">No image loaded</strong>
+        <p id="uploadHint">PNG, JPG, WebP, or SVG. The artwork is traced into filled areas and print paths automatically.</p>
+        <label class="upload-button">
+          <input id="imageUpload" type="file" accept="image/*,.svg,image/svg+xml">
+          Choose image
+        </label>
+      </div>
+      <div class="meta-grid">
+        <div class="meta-card">
+          <span>File</span>
+          <strong id="templateState">Ready for upload</strong>
+        </div>
+        <div class="meta-card">
+          <span>Areas</span>
+          <strong id="pathCount">00</strong>
+        </div>
+        <div class="meta-card">
+          <span>Status</span>
+          <strong id="modeState">Waiting</strong>
+        </div>
+      </div>
+      <div class="control-grid">
+        <div class="control-row">
+          <label class="control">
+            <span class="control-header">
+              <span class="control-title">Cup Size <button class="touch-info" type="button" data-info="Selects the real cup diameter used to scale the print path." aria-label="Explain cup size">i</button></span>
+              <span id="cupSizeValue">Required</span>
+            </span>
+            <select id="cupSizeSelect" class="control-select" required>
+              <option value="">Choose cup</option>
+              <option value="espresso">Espresso 45 mm</option>
+              <option value="cappuchino">Cappuchino 70 mm</option>
+              <option value="cafe_crema">Cafe Crema 70 mm</option>
+            </select>
+          </label>
+          <label class="control">
+            <span class="control-header">
+              <span class="control-title">Cup Scale <button class="touch-info" type="button" data-info="Scales the artwork relative to the selected cup. 50% on Espresso uses 22.5 mm." aria-label="Explain cup scale">i</button></span>
+              <span id="cupScaleValue">100%</span>
+            </span>
+            <input id="cupScale" type="range" min="10" max="100" value="100">
+          </label>
+        </div>
+        <div class="control-row" id="traceControlRow">
+          <label class="control" id="thresholdControl">
+            <span class="control-header">
+              <span class="control-title">Threshold <button class="touch-info" type="button" data-info="Sets how dark pixels must be before they become latte-art fill." aria-label="Explain threshold">i</button></span>
+              <span id="thresholdValue">56%</span>
+            </span>
+            <input id="threshold" type="range" min="10" max="95" value="56">
+          </label>
+          <label class="control" id="detailControl">
+            <span class="control-header">
+              <span class="control-title">Detail <button class="touch-info" type="button" data-info="Controls how much traced contours are smoothed and simplified." aria-label="Explain detail">i</button></span>
+              <span id="detailValue">68%</span>
+            </span>
+            <input id="detailLevel" type="range" min="25" max="100" value="68">
+          </label>
+        </div>
+        <div class="action-button-row">
+          <button id="machineCanvasToggle" class="action-button" type="button" aria-label="Show machine canvas" title="Machine Canvas">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 3v18"></path>
+              <path d="M3 12h18"></path>
+              <circle cx="12" cy="12" r="5.2"></circle>
+            </svg>
+            <span>Canvas</span>
+          </button>
+          <button id="invertIconButton" class="action-button" type="button" aria-label="Invert trace" title="Invert">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 3v18"></path>
+              <path d="M12 5a7 7 0 1 0 0 14"></path>
+            </svg>
+            <span id="invertActionLabel">Invert</span>
+          </button>
+          <button id="resetIconButton" class="action-button" type="button" aria-label="Reset controls" title="Reset">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M3 12a9 9 0 1 0 3-6.7"></path>
+              <path d="M3 4v5h5"></path>
+            </svg>
+            <span>Reset</span>
+          </button>
+        </div>
+      </div>
+      <div class="tool-row">
+        <button id="revectorizeButton" class="tool-button" type="button">Neu berechnen</button>
+        <button id="invertButton" class="tool-button" type="button">Invert</button>
+        <button id="rasterToggleButton" class="tool-button" type="button">Hide Grid</button>
+      </div>
+      <div class="preview-stack">
+        <div id="previewShell" class="stage-shell preview-shell">
+          <div id="activePreviewLabel" class="stage-label">Cup Preview</div>
+          <div id="machineCanvasStage" class="preview-stage machine-canvas-stage" hidden>
+            <canvas id="vectorCanvas" width="768" height="768" aria-label="Machine axes with cup circle"></canvas>
+          </div>
+          <div id="cupPreviewStage" class="preview-stage">
+            <img src="coffee-blank.png" alt="Coffee cup for latte-art preview">
+            <div class="latte-preview-layer" aria-hidden="true">
+              <canvas id="cupPreviewCanvas" width="720" height="720"></canvas>
+              <canvas id="printPreviewCanvas" width="720" height="720"></canvas>
+              <div id="printHead"></div>
+            </div>
+            <div id="previewNote" class="preview-note">
+              The cup preview appears after tracing with filled areas.
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="warningStack" class="warning-stack" hidden aria-live="assertive"></div>
+    </section>
+
+    <section id="advancedPanel" class="panel glass-panel advanced-panel" hidden>
+      <div class="section-head">
+        <p class="section-kicker">Advanced</p>
+        <h3>Machine Control</h3>
+      </div>
+      <div class="advanced-grid">
+        <div class="advanced-card">
+          <strong>Recipe Editor</strong>
+          <label class="mode-field">
+            <span class="mode-label">Recipe</span>
+            <select id="recipeSelect" class="mode-select"></select>
+          </label>
+          <label class="mode-field">
+            <span class="mode-label">Name</span>
+            <input id="recipeNameInput" class="mode-input" type="text" value="Recipe">
+          </label>
+          <div id="recipePhaseTabs" class="recipe-phase-tabs"></div>
+          <div id="recipeBuilder" class="recipe-builder"></div>
+          <div class="advanced-actions">
+            <button id="reloadRecipesButton" class="advanced-button" type="button">Reload</button>
+            <button id="saveRecipeButton" class="advanced-button primary" type="button">Save</button>
+          </div>
+        </div>
+        <div class="advanced-card">
+          <strong>Machine Config <button class="touch-info" type="button" data-info="Stores machine geometry, sensor offsets, and dosing parameters." aria-label="Explain machine config">i</button></strong>
+          <div class="mode-inline-grid">
+            <label class="mode-field">
+              <span class="mode-label">Print Center X mm</span>
+              <input id="printCenterX" class="mode-input" type="number" step="0.1" value="100">
+            </label>
+            <label class="mode-field">
+              <span class="mode-label">Print Center Y mm</span>
+              <input id="printCenterY" class="mode-input" type="number" step="0.1" value="100">
+            </label>
+            <label class="mode-field">
+              <span class="mode-label">Nozzle mm</span>
+              <input id="nozzleMm" class="mode-input" type="number" step="0.1" min="0.1" value="4">
+            </label>
+            <label class="mode-field">
+              <span class="mode-label">X Offset mm</span>
+              <input id="tofOffsetX" class="mode-input" type="number" step="0.1" value="0">
+            </label>
+            <label class="mode-field">
+              <span class="mode-label">Y Offset mm</span>
+              <input id="tofOffsetY" class="mode-input" type="number" step="0.1" value="0">
+            </label>
+            <label class="mode-field">
+              <span class="mode-label">Z Offset mm</span>
+              <input id="tofOffsetZ" class="mode-input" type="number" step="0.1" value="0">
+            </label>
+            <label class="mode-field">
+              <span class="mode-label">Cup Threshold mm</span>
+              <input id="cupThreshold" class="mode-input" type="number" step="0.1" min="0.1" value="90">
+            </label>
+            <label class="mode-field">
+              <span class="mode-label">Tank Connect</span>
+              <input id="tankServoInsertedAngle" class="mode-input" type="number" step="1" min="0" max="180" value="0">
+            </label>
+            <label class="mode-field">
+              <span class="mode-label">Tank Disconnect</span>
+              <input id="tankServoRemovedAngle" class="mode-input" type="number" step="1" min="0" max="180" value="45">
+            </label>
+            <label class="mode-field">
+              <span class="mode-label">Servo Settle ms</span>
+              <input id="tankServoSettleMs" class="mode-input" type="number" step="10" min="0" value="300">
+            </label>
+          </div>
+          <div class="advanced-actions">
+            <button id="reloadMachineConfigButton" class="advanced-button" type="button">Reload</button>
+            <button id="saveMachineConfigButton" class="advanced-button primary" type="button">Save Machine</button>
+          </div>
+        </div>
+        <div class="advanced-card">
+          <strong>Hardware</strong>
+          <div class="telemetry-grid">
+            <div class="telemetry-tile">
+              <span>ToF</span>
+              <strong id="tofValue">-- mm</strong>
+            </div>
+            <div class="telemetry-tile">
+              <span>Marlin</span>
+              <strong id="marlinValue">Waiting</strong>
+            </div>
+            <div class="telemetry-tile">
+              <span>Relays</span>
+              <strong id="relayValue">Idle</strong>
+            </div>
+            <div class="telemetry-tile">
+              <span>Tank</span>
+              <strong id="tankValue">Unknown</strong>
+            </div>
+            <div class="telemetry-tile">
+              <span>System</span>
+              <strong id="systemSwitchValue">Enabled</strong>
+            </div>
+            <div class="telemetry-tile">
+              <span>Buttons</span>
+              <strong id="quickButtonsValue">Idle</strong>
+            </div>
+          </div>
+          <div class="advanced-actions">
+            <button id="tofReadButton" class="advanced-button" type="button">Read ToF</button>
+            <button id="tankOpenButton" class="advanced-button" type="button">Service Connect</button>
+            <button id="tankCloseButton" class="advanced-button" type="button">Service Disconnect</button>
+            <button id="closeAdvancedButton" class="advanced-button primary" type="button">Close</button>
+          </div>
+        </div>
+        <div class="advanced-card">
+          <strong>Motion <button class="touch-info" type="button" data-info="Moves axes manually for setup and service. Use only while idle." aria-label="Explain motion">i</button></strong>
+          <label class="mode-field">
+            <span class="mode-label">Jog Step mm</span>
+            <select id="jogStepSelect" class="mode-select">
+              <option value="0.5">0.5 mm</option>
+              <option value="1" selected>1 mm</option>
+              <option value="5">5 mm</option>
+              <option value="10">10 mm</option>
+            </select>
+          </label>
+          <div class="motion-grid">
+            <button id="homeAllButton" class="advanced-button primary" type="button">Home All</button>
+            <button class="advanced-button" type="button" data-jog-axis="Y" data-jog-direction="1">Y+</button>
+            <button class="advanced-button" type="button" data-jog-axis="Z" data-jog-direction="1">Z+</button>
+            <button class="advanced-button" type="button" data-jog-axis="X" data-jog-direction="-1">X-</button>
+            <button class="advanced-button" type="button" data-jog-axis="Y" data-jog-direction="-1">Y-</button>
+            <button class="advanced-button" type="button" data-jog-axis="X" data-jog-direction="1">X+</button>
+            <span></span>
+            <button class="advanced-button" type="button" data-jog-axis="Z" data-jog-direction="-1">Z-</button>
+            <span></span>
+          </div>
+        </div>
+        <div class="advanced-card">
+          <strong>Case LED</strong>
+          <div class="telemetry-grid" hidden>
+            <div class="telemetry-tile"><span>Requested</span><strong id="caseLedRequestedValue">Off</strong></div>
+            <div class="telemetry-tile"><span>Physical</span><strong id="caseLedPhysicalValue">Off</strong></div>
+          </div>
+          <p id="caseLedHint" class="helper-text">The case LED follows the system switch and can be toggled here while the system is enabled.</p>
+          <div class="advanced-actions">
+            <button id="caseLedToggleButton" class="advanced-button primary" type="button">Turn Case LED On</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="actionShell" class="action-shell">
+      <button id="printButton" class="print-button" type="button" disabled>Begin Printing</button>
+      <div id="machineStatus" class="machine-status" data-state="waiting">
+        <span class="machine-dot" aria-hidden="true"></span>
+        <div class="machine-copy">
+          <strong>Machine Status</strong>
+          <span id="machineStatusText">Checking connection</span>
+        </div>
+        <div class="progress-meter">
+          <span id="progressBar"></span>
+        </div>
+      </div>
+    </section>
+    <div id="touchInfoPopover" class="touch-info-popover" hidden role="status" aria-live="polite"></div>
+  </main>
+  <script src="socket.io.min.js"></script>
+  <script>
+    const vectorCanvas = document.getElementById("vectorCanvas");
+    const vectorCtx = vectorCanvas.getContext("2d");
+    const cupPreviewCanvas = document.getElementById("cupPreviewCanvas");
+    const cupPreviewCtx = cupPreviewCanvas.getContext("2d");
+    const printPreviewCanvas = document.getElementById("printPreviewCanvas");
+    const printPreviewCtx = printPreviewCanvas.getContext("2d");
+
+    const imageUpload = document.getElementById("imageUpload");
+    const presetTab = document.getElementById("presetTab");
+    const textTab = document.getElementById("textTab");
+    const imageTab = document.getElementById("imageTab");
+    const presetPanel = document.getElementById("presetPanel");
+    const textPanel = document.getElementById("textPanel");
+    const imagePanel = document.getElementById("imagePanel");
+    const presetGrid = document.getElementById("presetGrid");
+    const textInput = document.getElementById("textInput");
+    const textFont = document.getElementById("textFont");
+    const textWeight = document.getElementById("textWeight");
+    const threshold = document.getElementById("threshold");
+    const detailLevel = document.getElementById("detailLevel");
+    const cupSizeSelect = document.getElementById("cupSizeSelect");
+    const cupScale = document.getElementById("cupScale");
+    const nozzleMm = document.getElementById("nozzleMm");
+    const revectorizeButton = document.getElementById("revectorizeButton");
+    const invertButton = document.getElementById("invertButton");
+    const invertIconButton = document.getElementById("invertIconButton");
+    const resetIconButton = document.getElementById("resetIconButton");
+    const rasterToggleButton = document.getElementById("rasterToggleButton");
+    const machineCanvasStage = document.getElementById("machineCanvasStage");
+    const cupPreviewStage = document.getElementById("cupPreviewStage");
+    const activePreviewLabel = document.getElementById("activePreviewLabel");
+    const machineCanvasToggle = document.getElementById("machineCanvasToggle");
+    const printButton = document.getElementById("printButton");
+    const studioPanel = document.getElementById("studioPanel");
+    const previewShell = document.getElementById("previewShell");
+    const actionShell = document.getElementById("actionShell");
+    const logoWrap = document.getElementById("logoWrap");
+    const advancedPanel = document.getElementById("advancedPanel");
+    const warningStack = document.getElementById("warningStack");
+    const recipeSelect = document.getElementById("recipeSelect");
+    const recipeNameInput = document.getElementById("recipeNameInput");
+    const recipePhaseTabs = document.getElementById("recipePhaseTabs");
+    const recipeBuilder = document.getElementById("recipeBuilder");
+    const reloadRecipesButton = document.getElementById("reloadRecipesButton");
+    const saveRecipeButton = document.getElementById("saveRecipeButton");
+    const tofReadButton = document.getElementById("tofReadButton");
+    const printCenterX = document.getElementById("printCenterX");
+    const printCenterY = document.getElementById("printCenterY");
+    const tofOffsetX = document.getElementById("tofOffsetX");
+    const tofOffsetY = document.getElementById("tofOffsetY");
+    const tofOffsetZ = document.getElementById("tofOffsetZ");
+    const cupThreshold = document.getElementById("cupThreshold");
+    const tankServoInsertedAngle = document.getElementById("tankServoInsertedAngle");
+    const tankServoRemovedAngle = document.getElementById("tankServoRemovedAngle");
+    const tankServoSettleMs = document.getElementById("tankServoSettleMs");
+    const reloadMachineConfigButton = document.getElementById("reloadMachineConfigButton");
+    const saveMachineConfigButton = document.getElementById("saveMachineConfigButton");
+    const tankOpenButton = document.getElementById("tankOpenButton");
+    const tankCloseButton = document.getElementById("tankCloseButton");
+    const closeAdvancedButton = document.getElementById("closeAdvancedButton");
+    const jogStepSelect = document.getElementById("jogStepSelect");
+    const homeAllButton = document.getElementById("homeAllButton");
+    const tofValue = document.getElementById("tofValue");
+    const marlinValue = document.getElementById("marlinValue");
+    const relayValue = document.getElementById("relayValue");
+    const tankValue = document.getElementById("tankValue");
+    const systemSwitchValue = document.getElementById("systemSwitchValue");
+    const quickButtonsValue = document.getElementById("quickButtonsValue");
+    const caseLedRequestedValue = document.getElementById("caseLedRequestedValue");
+    const caseLedPhysicalValue = document.getElementById("caseLedPhysicalValue");
+    const caseLedHint = document.getElementById("caseLedHint");
+    const caseLedToggleButton = document.getElementById("caseLedToggleButton");
+    const touchInfoPopover = document.getElementById("touchInfoPopover");
+
+    const previewNote = document.getElementById("previewNote");
+    const progressBar = document.getElementById("progressBar");
+    const templateState = document.getElementById("templateState");
+    const pathCount = document.getElementById("pathCount");
+    const modeState = document.getElementById("modeState");
+    const machineStatus = document.getElementById("machineStatus");
+    const machineStatusText = document.getElementById("machineStatusText");
+    const uploadFileName = document.getElementById("uploadFileName");
+    const uploadHint = document.getElementById("uploadHint");
+    const thresholdValue = document.getElementById("thresholdValue");
+    const detailValue = document.getElementById("detailValue");
+    const cupSizeValue = document.getElementById("cupSizeValue");
+    const cupScaleValue = document.getElementById("cupScaleValue");
+    const invertActionLabel = document.getElementById("invertActionLabel");
+    const printHead = document.getElementById("printHead");
+
+    const VECTOR_SIZE = vectorCanvas.width;
+    const PREVIEW_SIZE = cupPreviewCanvas.width;
+    const processCanvas = document.createElement("canvas");
+    const processCtx = processCanvas.getContext("2d", { willReadFrequently: true });
+    const textRenderCanvas = document.createElement("canvas");
+    const textRenderCtx = textRenderCanvas.getContext("2d");
+    const DEFAULT_FOAM_INTENSITY = 0.74;
+    const DEFAULT_PRINT_DIVISOR = 2.7;
+    const CUP_CENTER = { x: VECTOR_SIZE / 2, y: VECTOR_SIZE / 2 };
+    const CUP_RADIUS = VECTOR_SIZE * 0.47;
+    const CUP_SIZES = {
+      espresso: { label: "Espresso", diameterMm: 45 },
+      cappuchino: { label: "Cappuchino", diameterMm: 70 },
+      cafe_crema: { label: "Cafe Crema", diameterMm: 70 }
+    };
+    const DEFAULT_DRAW_FEED = 1200;
+    const DEFAULT_TRAVEL_FEED = 3000;
+    const DEFAULT_DEVICE_PATTERN = {
+      pins: { heater: 30, pump: 29, flow_stop: 28 },
+      idle: { heater: false, pump: false, flow_stop: true },
+      draw: { flow_stop: false, pump: true },
+      travel: { pump: false, flow_stop: true }
+    };
+    const RECIPE_PHASES = [
+      { id: "before_printing", label: "Before", outputs: ["pump", "heater", "flow_stop", "vacuum"] },
+      { id: "while_printjob", label: "While Job", outputs: ["vacuum"] },
+      { id: "while_printing", label: "While Pump", outputs: ["vacuum"] },
+      { id: "after_printjob", label: "After", outputs: ["pump", "heater", "flow_stop", "vacuum"] }
+    ];
+    const RECIPE_OUTPUT_LABELS = {
+      pump: "Pump",
+      heater: "Heater",
+      flow_stop: "Flow Stop",
+      vacuum: "Vacuum Valve"
+    };
+    const thresholdControl = document.getElementById("thresholdControl");
+    const detailControl = document.getElementById("detailControl");
+    const invertAction = invertIconButton;
+
+    const state = {
+      paths: [],
+      uploadedImage: null,
+      fileName: "",
+      objectUrl: "",
+      printing: false,
+      animationFrame: 0,
+      invert: false,
+      showRaster: true,
+      processing: false,
+      vectorizeTimer: 0,
+      showMachineCanvas: false,
+      outOfBounds: false,
+      outOfBoundsPathIndexes: [],
+      activeTab: "image",
+      presets: [],
+      selectedPresetId: "",
+      modeSources: {
+        image: null,
+        text: null,
+        preset: null
+      },
+      socket: null,
+      backendStatus: "connecting",
+      backendMessage: "Connecting to backend...",
+      activePrintPaths: [],
+      activePrintLength: 0,
+      backendUpload: null,
+      backendGcode: null,
+      blockingWarning: false,
+      warningMessage: "",
+      warnings: [],
+      debugIssues: [],
+      advancedOpen: false,
+      logoTapCount: 0,
+      logoTapTimer: 0,
+      recipes: [],
+      activeRecipe: "",
+      activeRecipePhase: "before_printing",
+      currentRecipe: null,
+      marlinMessage: "Waiting",
+      marlinConnected: false,
+      statusMessage: "Waiting",
+      relayState: {},
+      tofReading: null,
+      machineConfig: null,
+      tankStatus: "Unknown",
+      tankState: null,
+      hardwareState: {
+        system_enabled: true,
+        quick_buttons: {},
+        case_led_enabled: false,
+        case_led_output_active: false
+      }
+    };
+
+    function setStatus(message, mode) {
+      state.statusMessage = message || "";
+      if (mode) {
+        modeState.textContent = mode;
+      }
+      updateReadouts();
+    }
+
+    function setBackendStatus(status, message) {
+      state.backendStatus = status;
+      state.backendMessage = message;
+      updateReadouts();
+    }
+
+    function rememberDebugIssue(message) {
+      if (!message) {
+        return;
+      }
+      state.debugIssues = [message].concat(state.debugIssues.filter((entry) => entry !== message)).slice(0, 6);
+    }
+
+    function warningCategory(message, level) {
+      if (/backend|socket|marlin|config|debug|led|upload|tof|servo/i.test(message || "")) {
+        return "Config Error";
+      }
+      return level === "error" ? "Pre-print Error" : "Warning";
+    }
+
+    function setWarning(message, level) {
+      state.warningMessage = message || "";
+      state.blockingWarning = level === "error" || /tank|tof|sensor/i.test(state.warningMessage);
+      if (state.warningMessage) {
+        const category = warningCategory(state.warningMessage, level);
+        state.warnings = [
+          { message: state.warningMessage, level: level || "warning", category },
+          ...state.warnings.filter((entry) => entry.message !== state.warningMessage)
+        ].slice(0, 8);
+      }
+      if (/config|debug|led|marlin|socket|backend|upload|tof|servo/i.test(state.warningMessage)) {
+        rememberDebugIssue(state.warningMessage);
+      }
+      updateReadouts();
+    }
+
+    function clearWarning(matchPattern) {
+      if (matchPattern) {
+        state.warnings = state.warnings.filter((entry) => !matchPattern.test(entry.message));
+      } else {
+        state.warnings = [];
+      }
+      state.warningMessage = state.warnings[0] ? state.warnings[0].message : "";
+      state.blockingWarning = state.warnings.some((entry) => entry.level === "error" || /tank|tof|sensor/i.test(entry.message));
+      updateReadouts();
+    }
+
+    function renderWarningBanners() {
+      const derived = collectDerivedErrors();
+      const entries = [...state.warnings, ...derived]
+        .filter((entry, index, list) => list.findIndex((item) => item.message === entry.message) === index);
+      warningStack.hidden = entries.length === 0;
+      warningStack.innerHTML = entries.map((entry) => (
+        '<div class="warning-card">' +
+          '<strong>' + escapeHtml(entry.category || (entry.level === "error" ? "Error" : "Warning")) + '</strong>' +
+          '<span>' + escapeHtml(entry.message) + '</span>' +
+        '</div>'
+      )).join("");
+    }
+
+    function collectPrePrintIssues() {
+      const issues = [];
+      if (!state.hardwareState.system_enabled) {
+        issues.push("System switch is off.");
+      }
+      if (state.tankState && state.tankState.fault) {
+        issues.push(state.tankState.message || "Tank has a fault.");
+      } else if (state.tankState && !state.tankState.present) {
+        issues.push(state.tankState.message || "Tank is missing.");
+      }
+      if (!getSelectedCup()) {
+        issues.push("No cup size selected.");
+      }
+      if (!state.paths.length) {
+        issues.push("No traced artwork is ready.");
+      }
+      if (state.outOfBounds) {
+        issues.push("Artwork exceeds the selected cup area.");
+      }
+      if (state.blockingWarning && state.warningMessage) {
+        issues.push(state.warningMessage);
+      }
+      return Array.from(new Set(issues));
+    }
+
+    function collectConnectionErrors() {
+      const issues = [];
+      if (state.backendStatus !== "connected") {
+        issues.push("Backend is not connected.");
+      }
+      if (!state.marlinConnected) {
+        issues.push("Marlin is not connected.");
+      }
+      return issues;
+    }
+
+    function collectDebugIssues() {
+      const issues = collectConnectionErrors();
+      if (state.backendStatus === "error" || state.backendStatus === "disconnected") {
+        issues.push(state.backendMessage || "Backend connection issue.");
+      }
+      if (state.hardwareState.case_led_command_error) {
+        issues.push("Case LED command error: " + state.hardwareState.case_led_command_error);
+      }
+      return Array.from(new Set(issues.concat(state.debugIssues)));
+    }
+
+    function collectDerivedErrors() {
+      const configErrors = collectDebugIssues().map((message) => ({ message, level: "error", category: "Config Error" }));
+      const prePrintErrors = collectPrePrintIssues().map((message) => ({ message, level: "error", category: "Pre-print Error" }));
+      return configErrors.concat(prePrintErrors);
+    }
+
+    function formatTankState(payload) {
+      if (!payload) {
+        return "Unknown";
+      }
+      if (payload.fault) {
+        return "Fault" + (payload.simulated ? " (sim)" : "");
+      }
+      if (!payload.present) {
+        return "Missing";
+      }
+      if (payload.servo_connected) {
+        return "Inserted" + (payload.simulated ? " (sim)" : "");
+      }
+      return "Connecting";
+    }
+
+    function applyTankState(payload) {
+      state.tankState = payload || null;
+      state.tankStatus = formatTankState(payload);
+      tankValue.textContent = state.tankStatus;
+      if (payload && (payload.fault || !payload.present)) {
+        setWarning(payload.message || "Tank is missing.", "error");
+      } else if (payload && /tank/i.test(state.warningMessage || "")) {
+        clearWarning(/tank/i);
+      }
+      updateReadouts();
+    }
+
+    function updateAdvancedVisibility() {
+      advancedPanel.hidden = !state.advancedOpen;
+      logoWrap.setAttribute("aria-pressed", state.advancedOpen ? "true" : "false");
+      if (state.advancedOpen) {
+        triggerMotion(advancedPanel, "motion-rise");
+        loadRecipeList();
+        loadMachineConfig();
+        readTof();
+      }
+    }
+
+    function reflectSocketMessage(message, mode) {
+      if (!state.processing && !state.printing && !state.paths.length && !state.fileName) {
+        setStatus(message, mode);
+      }
+    }
+
+    function initSocketConnection() {
+      if (typeof window.io !== "function") {
+        setBackendStatus("error", "Socket error");
+        reflectSocketMessage("Socket.IO client could not be loaded.", "Error");
+        return;
+      }
+
+      const socket = window.io();
+      state.socket = socket;
+      setBackendStatus("connecting", "Connecting to backend...");
+
+      socket.on("connect", () => {
+        setBackendStatus("connected", "Backend connected");
+        reflectSocketMessage("Backend connected. Socket.IO is active.", "Connected");
+        socket.emit("client_ping", { timestamp: Date.now() });
+      });
+
+      socket.on("disconnect", () => {
+        state.marlinConnected = false;
+        setBackendStatus("disconnected", "Connection lost");
+        reflectSocketMessage("Backend connection lost.", "Error");
+      });
+
+      socket.on("connect_error", () => {
+        state.marlinConnected = false;
+        setBackendStatus("error", "Socket error");
+        reflectSocketMessage("Socket.IO connection failed.", "Error");
+      });
+
+      socket.on("server_status", (payload) => {
+        const message = payload && payload.message ? payload.message : "Backend connected";
+        setBackendStatus("connected", message);
+        reflectSocketMessage(message + ". Socket.IO is active.", "Connected");
+      });
+
+      socket.on("server_pong", () => {
+        setBackendStatus("connected", "Backend connected");
+        reflectSocketMessage("Backend connected. Ping/Pong succeeded.", "Connected");
+      });
+
+      socket.on("print_progress", (payload) => {
+        updatePrintProgress(payload || {});
+      });
+
+      socket.on("marlin_status", (payload) => {
+        if (payload && payload.msg) {
+          state.marlinMessage = payload.msg;
+          state.marlinConnected = !/error|timeout|failed/i.test(payload.msg);
+          marlinValue.textContent = payload.msg;
+          setStatus("Marlin: " + payload.msg, state.printing ? "Printing" : "Ready");
+        }
+      });
+
+      socket.on("warning", (payload) => {
+        const rawLevel = payload && payload.level === "error" ? "error" : "warning";
+        const level = rawLevel === "error" ? "Error" : "Warning";
+        const message = payload && payload.msg ? payload.msg : "Machine warning received.";
+        setWarning(message, rawLevel);
+        setStatus(message, level);
+        if (level === "Error" || /aborted/i.test(message)) {
+          stopPrinting(false);
+        }
+      });
+
+      socket.on("tof_reading", (payload) => {
+        if (payload && Number.isFinite(Number(payload.z_mm))) {
+          state.tofReading = payload;
+          tofValue.textContent = formatTofPayload(payload);
+          setStatus("ToF Z offset set: " + Number(payload.z_mm).toFixed(2) + " mm", "Calibrating");
+        }
+      });
+
+      socket.on("machine_config", (payload) => {
+        applyMachineConfig(payload);
+      });
+
+      socket.on("tank_status", (payload) => {
+        applyTankState(payload);
+        if (payload && (payload.fault || !payload.present)) {
+          setStatus(payload.message || "Tank is missing.", "Error");
+          stopPrinting(false);
+        }
+      });
+
+      socket.on("hardware_inputs", (payload) => {
+        applyHardwareState(payload);
+      });
+
+      socket.on("quick_button", (payload) => {
+        if (payload && payload.name) {
+          setBackendStatus("connected", payload.name + (payload.pressed ? " pressed" : " released"));
+        }
+      });
+
+      socket.on("led_status", (payload) => {
+        if (payload && payload.status) {
+          setBackendStatus("connected", "LED " + payload.status);
+        }
+      });
+
+      socket.on("relay_update", (payload) => {
+        state.relayState = payload || {};
+        relayValue.textContent = Object.keys(state.relayState).length
+          ? Object.entries(state.relayState).map(([key, value]) => key + ":" + (value ? "on" : "off")).join(" ")
+          : "Idle";
+      });
+    }
+
+    function shorten(value, maxLength) {
+      return value.length > maxLength ? value.slice(0, maxLength - 3) + "..." : value;
+    }
+
+    function triggerMotion(element, className) {
+      if (!element || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        return;
+      }
+
+      element.classList.remove(className);
+      void element.offsetWidth;
+      element.classList.add(className);
+
+      window.setTimeout(() => {
+        element.classList.remove(className);
+      }, 650);
+    }
+
+    function resetWorkspace(message, mode) {
+      stopPrinting(true);
+      state.uploadedImage = null;
+      state.fileName = "";
+      state.paths = [];
+      state.processing = false;
+      state.outOfBounds = false;
+      state.outOfBoundsPathIndexes = [];
+      state.showMachineCanvas = false;
+      drawMachineCanvas([]);
+      renderCupPreview([]);
+      updateReadouts();
+      setStatus(message, mode);
+    }
+
+    function storeModeSource(mode, image, fileName) {
+      state.modeSources[mode] = { image, fileName };
+      state.uploadedImage = image;
+      state.fileName = fileName;
+    }
+
+    function loadImageSource(src, mode, fileName) {
+      const image = new Image();
+      image.onload = () => {
+        storeModeSource(mode, image, fileName);
+        if (state.activeTab === mode) {
+          triggerMotion(studioPanel, "motion-rise");
+          vectorizeImage();
+        }
+      };
+      image.onerror = () => {
+        setWarning("Image source could not be loaded.", "warning");
+      };
+      image.src = src;
+    }
+
+    function renderPresetGrid() {
+      if (!state.presets.length) {
+        presetGrid.innerHTML = '<div class="empty-note">Add black filled SVGs to <code>static/presets/</code>. They will appear here automatically.</div>';
+        return;
+      }
+
+      presetGrid.innerHTML = state.presets.map((preset) => `
+        <button class="preset-card" type="button" data-preset-id="${preset.id}" aria-pressed="${state.selectedPresetId === preset.id}">
+          <img src="${preset.file}" alt="${preset.name}">
+          <strong>${preset.name}</strong>
+          <span>${preset.caption || "Preset"}</span>
+        </button>
+      `).join("");
+
+      presetGrid.querySelectorAll("[data-preset-id]").forEach((button) => {
+        button.addEventListener("click", () => {
+          state.selectedPresetId = button.dataset.presetId;
+          renderPresetGrid();
+          triggerMotion(button, "motion-pulse");
+          applySelectedPreset();
+        });
+      });
+    }
+
+    async function loadPresets() {
+      try {
+        const response = await fetch("/api/presets", { cache: "no-store" });
+        if (!response.ok) {
+          throw new Error("Preset list unavailable");
+        }
+        const payload = await response.json();
+        state.presets = Array.isArray(payload) ? payload : (payload.presets || []);
+        if (!state.selectedPresetId && state.presets.length) {
+          state.selectedPresetId = state.presets[0].id;
+        }
+      } catch (error) {
+        state.presets = [];
+      }
+
+      renderPresetGrid();
+    }
+
+    function applySelectedPreset() {
+      const preset = state.presets.find((entry) => entry.id === state.selectedPresetId) || state.presets[0];
+      if (!preset) {
+        resetWorkspace("No presets found. Add SVGs to the preset folder.", "Waiting");
+        return;
+      }
+
+      state.selectedPresetId = preset.id;
+      renderPresetGrid();
+      loadImageSource(preset.file, "preset", "Preset: " + preset.name);
+    }
+
+    function generateTextSource() {
+      const value = textInput.value.trim();
+      if (!value) {
+        state.modeSources.text = null;
+        if (state.activeTab === "text") {
+          resetWorkspace("Enter text to prepare it as artwork.", "Waiting");
+        }
+        return;
+      }
+
+      const size = 1200;
+      const padding = size * 0.14;
+      const family = textFont.value === "Newsreader"
+        ? '"Newsreader", Georgia, serif'
+        : '"Manrope", system-ui, sans-serif';
+      const weight = textWeight.value;
+      let fontSize = 720;
+
+      textRenderCanvas.width = size;
+      textRenderCanvas.height = size;
+      textRenderCtx.clearRect(0, 0, size, size);
+      textRenderCtx.textAlign = "center";
+      textRenderCtx.textBaseline = "middle";
+      textRenderCtx.fillStyle = "#000000";
+
+      do {
+        textRenderCtx.font = weight + " " + fontSize + "px " + family;
+        fontSize -= 12;
+      } while (fontSize > 160 && textRenderCtx.measureText(value).width > size - padding * 2);
+
+      textRenderCtx.font = weight + " " + fontSize + "px " + family;
+      textRenderCtx.fillText(value, size / 2, size / 2);
+
+      loadImageSource(textRenderCanvas.toDataURL("image/png"), "text", 'Text: ' + value);
+    }
+
+    function switchTab(mode) {
+      state.activeTab = mode;
+      state.showMachineCanvas = false;
+      updateReadouts();
+      triggerMotion(studioPanel, "motion-rise");
+
+      if (mode === "preset") {
+        if (state.presets.length) {
+          applySelectedPreset();
+        } else {
+          loadPresets().then(() => {
+            if (state.activeTab === "preset") {
+              applySelectedPreset();
+            }
+          });
+        }
+        return;
+      }
+
+      if (mode === "text") {
+        generateTextSource();
+        return;
+      }
+
+      if (state.modeSources.image) {
+        storeModeSource("image", state.modeSources.image.image, state.modeSources.image.fileName);
+        vectorizeImage();
+        return;
+      }
+
+      resetWorkspace("Upload an image or SVG to prepare the artwork automatically.", "Waiting");
+    }
+
+    function updateReadouts() {
+      const selectedCup = getSelectedCup();
+      const effectiveDiameter = getEffectivePrintDiameterMm();
+      thresholdValue.textContent = threshold.value + "%";
+      detailValue.textContent = detailLevel.value + "%";
+      cupSizeValue.textContent = selectedCup ? selectedCup.diameterMm.toFixed(0) + " mm" : "Required";
+      cupScaleValue.textContent = selectedCup
+        ? cupScale.value + "% = " + effectiveDiameter.toFixed(1) + " mm"
+        : cupScale.value + "%";
+      pathCount.textContent = String(getClosedPathCount()).padStart(2, "0");
+      templateState.textContent = state.fileName ? shorten(state.fileName, 18) : "Ready for upload";
+      uploadFileName.textContent = state.modeSources.image && state.modeSources.image.fileName
+        ? state.modeSources.image.fileName
+        : "No image loaded";
+      uploadHint.textContent = state.modeSources.image
+        ? "Adjust Threshold, Detail, Invert, and Cup Scale. Filled areas and the print path update automatically."
+        : "PNG, JPG, WebP, or SVG. The artwork is traced into filled areas and print paths automatically.";
+      presetTab.setAttribute("aria-pressed", state.activeTab === "preset" ? "true" : "false");
+      textTab.setAttribute("aria-pressed", state.activeTab === "text" ? "true" : "false");
+      imageTab.setAttribute("aria-pressed", state.activeTab === "image" ? "true" : "false");
+      presetPanel.hidden = state.activeTab !== "preset";
+      textPanel.hidden = state.activeTab !== "text";
+      imagePanel.hidden = state.activeTab !== "image";
+      thresholdControl.hidden = state.activeTab !== "image";
+      detailControl.classList.toggle("span-all", state.activeTab !== "image");
+      invertAction.hidden = false;
+      invertButton.textContent = state.invert ? "Normal" : "Invert";
+      invertActionLabel.textContent = state.invert ? "Normal" : "Invert";
+      rasterToggleButton.textContent = state.showRaster ? "Hide Grid" : "Show Grid";
+      printButton.disabled = !state.printing && (!selectedCup || state.paths.length === 0 || state.outOfBounds || state.backendStatus !== "connected" || state.blockingWarning || !state.hardwareState.system_enabled || (state.tankState && (state.tankState.fault || !state.tankState.present)));
+      machineCanvasStage.hidden = !state.showMachineCanvas;
+      cupPreviewStage.hidden = state.showMachineCanvas;
+      activePreviewLabel.textContent = state.showMachineCanvas ? "Machine Canvas" : "Cup Preview";
+      machineCanvasToggle.setAttribute("aria-pressed", state.showMachineCanvas ? "true" : "false");
+      machineCanvasToggle.setAttribute("aria-label", state.showMachineCanvas ? "Switch to cup preview" : "Switch to machine canvas");
+      machineCanvasToggle.title = state.showMachineCanvas ? "Cup Preview" : "Machine Canvas";
+      machineCanvasToggle.disabled = false;
+      previewNote.hidden = state.paths.length > 0;
+      modeState.textContent = state.processing
+        ? "Vectorizing"
+        : state.outOfBounds
+          ? "Error"
+        : state.printing
+          ? "Printing"
+          : state.paths.length
+            ? "Ready"
+            : state.fileName
+              ? "Adjust"
+              : "Waiting";
+      renderWarningBanners();
+      updateMachineStatus();
+    }
+
+    function updateMachineStatus() {
+      const configErrors = collectDebugIssues();
+      const prePrintErrors = collectPrePrintIssues();
+      const connected = state.backendStatus === "connected" && state.marlinConnected;
+      machineStatus.dataset.state = connected && !configErrors.length ? "ready" : "error";
+      const labels = [];
+      if (!connected || configErrors.length) {
+        labels.push("Config Error");
+      }
+      if (prePrintErrors.length) {
+        labels.push("Pre-print Error");
+      }
+      machineStatusText.textContent = labels.length ? labels.join(" / ") : "Connected";
+    }
+
+    function getClosedPathCount() {
+      return state.paths.filter((path) => path.closed && path.points.length > 2).length;
+    }
+
+    function getCupScaleFactor() {
+      return Number(cupScale.value) / 100;
+    }
+
+    function getSelectedCup() {
+      return CUP_SIZES[cupSizeSelect.value] || null;
+    }
+
+    function getSelectedCupDiameterMm() {
+      const selectedCup = getSelectedCup();
+      return selectedCup ? selectedCup.diameterMm : 0;
+    }
+
+    function getEffectivePrintDiameterMm() {
+      return getSelectedCupDiameterMm() * getCupScaleFactor();
+    }
+
+    function transformCupPoint(point, scaleFactor = getCupScaleFactor()) {
+      return {
+        x: CUP_CENTER.x + (point.x - CUP_CENTER.x) * scaleFactor,
+        y: CUP_CENTER.y + (point.y - CUP_CENTER.y) * scaleFactor
+      };
+    }
+
+    function isPointOutsideCup(point) {
+      return distance(point, CUP_CENTER) > CUP_RADIUS;
+    }
+
+    function getRenderablePaths(scaleFactor = getCupScaleFactor()) {
+      return state.paths.map((path, index) => {
+        const points = path.points.map((point) => transformCupPoint(point, scaleFactor));
+        return {
+          index,
+          closed: path.closed,
+          points,
+          outside: points.some((point) => isPointOutsideCup(point))
+        };
+      });
+    }
+
+    function evaluateBounds(scaleFactor = getCupScaleFactor()) {
+      const renderPaths = getRenderablePaths(scaleFactor);
+      state.outOfBoundsPathIndexes = renderPaths
+        .filter((path) => path.outside)
+        .map((path) => path.index);
+      state.outOfBounds = state.outOfBoundsPathIndexes.length > 0;
+      return renderPaths;
+    }
+
+    function distance(pointA, pointB) {
+      return Math.hypot(pointB.x - pointA.x, pointB.y - pointA.y);
+    }
+
+    function getFittedRect(image, size) {
+      const max = size * 0.82;
+      const scale = Math.min(max / image.width, max / image.height);
+      const width = image.width * scale;
+      const height = image.height * scale;
+      return {
+        x: (size - width) / 2,
+        y: (size - height) / 2,
+        width,
+        height
+      };
+    }
+
+    function drawMachineCanvas(renderPaths = evaluateBounds()) {
+      vectorCtx.clearRect(0, 0, VECTOR_SIZE, VECTOR_SIZE);
+
+      const gradient = vectorCtx.createLinearGradient(0, 0, VECTOR_SIZE, VECTOR_SIZE);
+      gradient.addColorStop(0, "#1b0c0a");
+      gradient.addColorStop(0.55, "#2c1713");
+      gradient.addColorStop(1, "#3f261f");
+      vectorCtx.fillStyle = gradient;
+      vectorCtx.fillRect(0, 0, VECTOR_SIZE, VECTOR_SIZE);
+
+      const bloom = vectorCtx.createRadialGradient(
+        VECTOR_SIZE * 0.26,
+        VECTOR_SIZE * 0.18,
+        VECTOR_SIZE * 0.02,
+        VECTOR_SIZE * 0.28,
+        VECTOR_SIZE * 0.24,
+        VECTOR_SIZE * 0.74
+      );
+      bloom.addColorStop(0, "rgba(255,241,223,0.18)");
+      bloom.addColorStop(1, "rgba(255,255,255,0)");
+      vectorCtx.fillStyle = bloom;
+      vectorCtx.fillRect(0, 0, VECTOR_SIZE, VECTOR_SIZE);
+
+      if (state.showRaster) {
+        vectorCtx.strokeStyle = "rgba(255,244,227,0.06)";
+        vectorCtx.lineWidth = 1;
+        for (let position = 56; position < VECTOR_SIZE; position += 56) {
+          vectorCtx.beginPath();
+          vectorCtx.moveTo(position, 0);
+          vectorCtx.lineTo(position, VECTOR_SIZE);
+          vectorCtx.stroke();
+          vectorCtx.beginPath();
+          vectorCtx.moveTo(0, position);
+          vectorCtx.lineTo(VECTOR_SIZE, position);
+          vectorCtx.stroke();
+        }
+      }
+
+      vectorCtx.strokeStyle = "rgba(255,244,227,0.18)";
+      vectorCtx.lineWidth = 1.4;
+      vectorCtx.beginPath();
+      vectorCtx.moveTo(CUP_CENTER.x, 36);
+      vectorCtx.lineTo(CUP_CENTER.x, VECTOR_SIZE - 36);
+      vectorCtx.moveTo(36, CUP_CENTER.y);
+      vectorCtx.lineTo(VECTOR_SIZE - 36, CUP_CENTER.y);
+      vectorCtx.stroke();
+
+      vectorCtx.fillStyle = "rgba(255,248,239,0.05)";
+      vectorCtx.beginPath();
+      vectorCtx.arc(CUP_CENTER.x, CUP_CENTER.y, CUP_RADIUS, 0, Math.PI * 2);
+      vectorCtx.fill();
+
+      vectorCtx.strokeStyle = state.outOfBounds ? "rgba(217,102,82,0.86)" : "rgba(255,243,227,0.34)";
+      vectorCtx.lineWidth = 2.6;
+      vectorCtx.setLineDash([10, 12]);
+      vectorCtx.beginPath();
+      vectorCtx.arc(CUP_CENTER.x, CUP_CENTER.y, CUP_RADIUS, 0, Math.PI * 2);
+      vectorCtx.stroke();
+      vectorCtx.setLineDash([]);
+
+      vectorCtx.fillStyle = "rgba(255,243,227,0.72)";
+      vectorCtx.font = '700 18px "Manrope", system-ui, sans-serif';
+      vectorCtx.fillText("Y", CUP_CENTER.x + 12, 32);
+      vectorCtx.fillText("X", VECTOR_SIZE - 28, CUP_CENTER.y - 10);
+
+      if (!renderPaths.length) {
+        return;
+      }
+
+      const validPaths = renderPaths.filter((path) => !path.outside);
+      const invalidPaths = renderPaths.filter((path) => path.outside);
+
+      drawFilledPaths(vectorCtx, validPaths, {
+        fillStyle: "rgba(248,239,223,0.9)",
+        shadowColor: "rgba(255,246,232,0.18)",
+        shadowBlur: 18
+      }, 1);
+
+      if (invalidPaths.length) {
+        drawFilledPaths(vectorCtx, invalidPaths, {
+          fillStyle: "rgba(217,102,82,0.34)",
+          shadowColor: "rgba(217,102,82,0.18)",
+          shadowBlur: 12
+        }, 1);
+
+        drawPreviewPaths(vectorCtx, invalidPaths, Infinity, {
+          strokeStyle: "rgba(255,194,178,0.95)",
+          shadowColor: "rgba(217,102,82,0.2)",
+          shadowBlur: 10,
+          lineWidth: 3
+        }, 1);
+
+        vectorCtx.save();
+        vectorCtx.fillStyle = "rgba(255,208,198,0.96)";
+        for (const path of invalidPaths) {
+          for (const point of path.points) {
+            if (!isPointOutsideCup(point)) {
+              continue;
+            }
+            vectorCtx.beginPath();
+            vectorCtx.arc(point.x, point.y, 4.2, 0, Math.PI * 2);
+            vectorCtx.fill();
+          }
+        }
+        vectorCtx.restore();
+      }
+    }
+
+    function drawPreviewPaths(ctx, paths, maxLength, options, scaleFactor) {
+      const hasLimit = Number.isFinite(maxLength);
+      let remaining = maxLength;
+
+      ctx.save();
+      ctx.scale(scaleFactor, scaleFactor);
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.strokeStyle = options.strokeStyle;
+      ctx.shadowColor = options.shadowColor;
+      ctx.shadowBlur = options.shadowBlur;
+      ctx.lineWidth = options.lineWidth;
+
+      for (const path of paths) {
+        const points = path.points;
+        if (!points.length) {
+          continue;
+        }
+
+        ctx.beginPath();
+        ctx.moveTo(points[0].x, points[0].y);
+
+        let finished = true;
+        for (let index = 1; index < points.length; index += 1) {
+          const previous = points[index - 1];
+          const current = points[index];
+          const segmentLength = distance(previous, current);
+
+          if (!hasLimit) {
+            ctx.lineTo(current.x, current.y);
+            continue;
+          }
+
+          if (remaining >= segmentLength) {
+            ctx.lineTo(current.x, current.y);
+            remaining -= segmentLength;
+          } else if (remaining > 0) {
+            const ratio = segmentLength === 0 ? 0 : remaining / segmentLength;
+            ctx.lineTo(
+              previous.x + (current.x - previous.x) * ratio,
+              previous.y + (current.y - previous.y) * ratio
+            );
+            remaining = 0;
+            finished = false;
+            break;
+          } else {
+            finished = false;
+            break;
+          }
+        }
+
+        if (path.closed && points.length > 2 && (!hasLimit || finished)) {
+          ctx.closePath();
+        }
+        ctx.stroke();
+        if (hasLimit && !finished) {
+          break;
+        }
+      }
+
+      ctx.restore();
+    }
+
+    function drawFilledPaths(ctx, paths, options, scaleFactor) {
+      ctx.save();
+      ctx.scale(scaleFactor, scaleFactor);
+      ctx.fillStyle = options.fillStyle;
+      ctx.shadowColor = options.shadowColor;
+      ctx.shadowBlur = options.shadowBlur;
+
+      for (const path of paths) {
+        if (!path.closed || path.points.length < 3) {
+          continue;
+        }
+
+        ctx.beginPath();
+        ctx.moveTo(path.points[0].x, path.points[0].y);
+        for (let index = 1; index < path.points.length; index += 1) {
+          ctx.lineTo(path.points[index].x, path.points[index].y);
+        }
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+
+    function renderCupPreview(renderPaths = evaluateBounds()) {
+      cupPreviewCtx.clearRect(0, 0, PREVIEW_SIZE, PREVIEW_SIZE);
+      if (!renderPaths.length) {
+        return;
+      }
+
+      const intensity = DEFAULT_FOAM_INTENSITY;
+      drawFilledPaths(cupPreviewCtx, renderPaths, {
+        fillStyle: "rgba(248,240,226," + (0.82 + intensity * 0.14).toFixed(3) + ")",
+        shadowColor: "rgba(255,249,240,0.24)",
+        shadowBlur: 20
+      }, PREVIEW_SIZE / VECTOR_SIZE);
+
+      drawFilledPaths(cupPreviewCtx, renderPaths, {
+        fillStyle: "rgba(255,252,247,0.16)",
+        shadowColor: "rgba(255,252,247,0)",
+        shadowBlur: 0
+      }, PREVIEW_SIZE / VECTOR_SIZE);
+    }
+
+    function renderPrintLayer(maxLength, renderPaths) {
+      printPreviewCtx.clearRect(0, 0, PREVIEW_SIZE, PREVIEW_SIZE);
+      if (!renderPaths.length || maxLength <= 0) {
+        return;
+      }
+
+      const intensity = DEFAULT_FOAM_INTENSITY;
+      [
+        {
+          strokeStyle: "rgba(255,244,222," + (0.28 + intensity * 0.18).toFixed(3) + ")",
+          shadowColor: "rgba(255,245,230,0.5)",
+          shadowBlur: 24,
+          lineWidth: 10
+        },
+        {
+          strokeStyle: "rgba(255,251,244," + (0.68 + intensity * 0.25).toFixed(3) + ")",
+          shadowColor: "rgba(255,255,245,0.42)",
+          shadowBlur: 12,
+          lineWidth: 5.3
+        }
+      ].forEach((pass) => drawPreviewPaths(printPreviewCtx, renderPaths, maxLength, pass, PREVIEW_SIZE / VECTOR_SIZE));
+    }
+
+    function getTotalPathLength(paths) {
+      let total = 0;
+      for (const path of paths) {
+        for (let index = 1; index < path.points.length; index += 1) {
+          total += distance(path.points[index - 1], path.points[index]);
+        }
+        if (path.closed && path.points.length > 2) {
+          total += distance(path.points[path.points.length - 1], path.points[0]);
+        }
+      }
+      return total;
+    }
+
+    function getPointAtLength(paths, targetLength) {
+      let remaining = targetLength;
+      let lastPoint = null;
+
+      for (const path of paths) {
+        if (!path.points.length) {
+          continue;
+        }
+
+        for (let index = 1; index < path.points.length; index += 1) {
+          const previous = path.points[index - 1];
+          const current = path.points[index];
+          const segmentLength = distance(previous, current);
+
+          if (remaining <= segmentLength) {
+            const ratio = segmentLength === 0 ? 0 : remaining / segmentLength;
+            return {
+              x: previous.x + (current.x - previous.x) * ratio,
+              y: previous.y + (current.y - previous.y) * ratio
+            };
+          }
+
+          remaining -= segmentLength;
+          lastPoint = current;
+        }
+
+        if (path.closed && path.points.length > 2) {
+          const first = path.points[0];
+          const final = path.points[path.points.length - 1];
+          const closingLength = distance(final, first);
+          if (remaining <= closingLength) {
+            const ratio = closingLength === 0 ? 0 : remaining / closingLength;
+            return {
+              x: final.x + (first.x - final.x) * ratio,
+              y: final.y + (first.y - final.y) * ratio
+            };
+          }
+          remaining -= closingLength;
+          lastPoint = first;
+        }
+      }
+
+      return lastPoint;
+    }
+
+    function movePrintHead(point, visible) {
+      if (!visible || !point) {
+        printHead.style.opacity = "0";
+        return;
+      }
+
+      printHead.style.left = (point.x / VECTOR_SIZE) * 100 + "%";
+      printHead.style.top = (point.y / VECTOR_SIZE) * 100 + "%";
+      printHead.style.opacity = "1";
+    }
+
+    function buildGcodePayload() {
+      return {
+        paths: state.paths.map((path) => ({
+          closed: Boolean(path.closed),
+          points: path.points.map((point) => ({
+            x: Number(point.x),
+            y: Number(point.y)
+          }))
+        })),
+        coordinate_size: VECTOR_SIZE,
+        cup_radius: CUP_RADIUS,
+        cup_size: cupSizeSelect.value,
+        cup_scale: getCupScaleFactor(),
+        draw_feed: DEFAULT_DRAW_FEED,
+        travel_feed: DEFAULT_TRAVEL_FEED,
+        pattern: DEFAULT_DEVICE_PATTERN
+      };
+    }
+
+    function updatePrintProgress(payload) {
+      const percent = Math.max(0, Math.min(100, Number(payload.percent) || 0));
+      const lengthToDraw = state.activePrintLength * (percent / 100);
+      progressBar.style.width = percent.toFixed(1) + "%";
+
+      if (state.activePrintPaths.length) {
+        renderPrintLayer(lengthToDraw, state.activePrintPaths);
+        movePrintHead(getPointAtLength(state.activePrintPaths, lengthToDraw), percent < 100);
+      }
+
+      if (percent >= 100) {
+        stopPrinting(false);
+        progressBar.style.width = "100%";
+        setStatus("Latte-art path complete. Ready for the next print.", "Ready");
+        return;
+      }
+
+      setStatus("Print path running: " + Math.round(percent) + "% complete.", "Printing");
+    }
+
+    function stopPrinting(resetProgress) {
+      if (state.animationFrame) {
+        cancelAnimationFrame(state.animationFrame);
+      }
+      state.animationFrame = 0;
+      state.printing = false;
+      state.activePrintPaths = [];
+      state.activePrintLength = 0;
+      printPreviewCtx.clearRect(0, 0, PREVIEW_SIZE, PREVIEW_SIZE);
+      movePrintHead(null, false);
+      if (resetProgress) {
+        progressBar.style.width = "0%";
+      }
+      printButton.textContent = "Begin Printing";
+      updateReadouts();
+    }
+
+    async function abortPrinting() {
+      if (!state.printing) {
+        return;
+      }
+
+      printButton.textContent = "Stopping...";
+      setStatus("Stopping print. Closing the outlet.", "Stopping");
+      try {
+        await fetch("/api/abort", { method: "POST" });
+      } catch (error) {
+        setStatus("Abort could not be sent to the backend.", "Error");
+      }
+    }
+
+    async function beginPrinting() {
+      const renderPaths = evaluateBounds();
+
+      if (!state.paths.length || state.printing) {
+        return;
+      }
+
+      if (!getSelectedCup()) {
+        setWarning("Select a cup size first.", "error");
+        setStatus("Cup size is missing. Choose Espresso, Cappuchino, or Cafe Crema.", "Error");
+        return;
+      }
+
+      if (state.backendStatus !== "connected") {
+        setWarning("Backend is not connected. Printing cannot start.", "error");
+        setStatus("Backend is not connected. Printing cannot start.", "Error");
+        return;
+      }
+
+      if (state.blockingWarning) {
+        setStatus("Active machine warning blocks printing: " + state.warningMessage, "Error");
+        return;
+      }
+
+      if (state.outOfBounds) {
+        state.showMachineCanvas = true;
+        setStatus("Artwork exceeds the cup area. Adjust Cup Scale or tracing.", "Error");
+        drawMachineCanvas(renderPaths);
+        updateReadouts();
+        return;
+      }
+
+      stopPrinting(false);
+      state.printing = true;
+      state.activePrintPaths = renderPaths;
+      state.activePrintLength = getTotalPathLength(renderPaths);
+      updateReadouts();
+      printButton.textContent = "Abort Print";
+      setStatus("Sending print job to Marlin.", "Starting");
+      triggerMotion(actionShell, "motion-pulse");
+      triggerMotion(previewShell, "motion-glow");
+
+      try {
+        const gcodeResponse = await fetch("/api/gcode", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(buildGcodePayload())
+        });
+        const gcodePayload = await gcodeResponse.json().catch(() => ({}));
+
+        if (!gcodeResponse.ok) {
+          throw new Error(gcodePayload.error || "G-code could not be generated.");
+        }
+
+        setStatus("G-code generated: " + (gcodePayload.line_count || 0) + " lines. Starting print job.", "Starting");
+
+        const startPayload = { gcode: gcodePayload.gcode };
+        if (state.activeRecipe) {
+          startPayload.recipe = state.activeRecipe;
+        }
+
+        const response = await fetch("/api/start-print", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(startPayload)
+        });
+        const payload = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          throw new Error(payload.error || "Print job could not be started.");
+        }
+
+        setStatus("Print job started. Waiting for Marlin progress.", "Printing");
+      } catch (error) {
+        stopPrinting(false);
+        setStatus(error.message || "Print job could not be started.", "Error");
+      }
+    }
+
+    function buildMask(imageData, width, height) {
+      const maskWidth = width + 2;
+      const maskHeight = height + 2;
+      const mask = new Uint8Array(maskWidth * maskHeight);
+      const limit = Number(threshold.value) / 100;
+
+      for (let y = 0; y < height; y += 1) {
+        for (let x = 0; x < width; x += 1) {
+          const offset = (y * width + x) * 4;
+          const red = imageData[offset];
+          const green = imageData[offset + 1];
+          const blue = imageData[offset + 2];
+          const alpha = imageData[offset + 3] / 255;
+          const luminance = (0.2126 * red + 0.7152 * green + 0.0722 * blue) / 255;
+          const signal = state.invert ? luminance * alpha : (1 - luminance) * alpha;
+
+          if (alpha > 0.02 && signal > limit) {
+            mask[(y + 1) * maskWidth + (x + 1)] = 1;
+          }
+        }
+      }
+
+      return { mask, width: maskWidth, height: maskHeight };
+    }
+
+    function smoothMask(source, width, height) {
+      const result = new Uint8Array(source.length);
+      for (let y = 1; y < height - 1; y += 1) {
+        for (let x = 1; x < width - 1; x += 1) {
+          let count = 0;
+          for (let offsetY = -1; offsetY <= 1; offsetY += 1) {
+            for (let offsetX = -1; offsetX <= 1; offsetX += 1) {
+              count += source[(y + offsetY) * width + (x + offsetX)];
+            }
+          }
+          const index = y * width + x;
+          result[index] = source[index] ? (count >= 3 ? 1 : 0) : (count >= 6 ? 1 : 0);
+        }
+      }
+      return result;
+    }
+
+    function segmentPoint(x, y, edge) {
+      if (edge === "top") {
+        return { x: x + 0.5, y };
+      }
+      if (edge === "right") {
+        return { x: x + 1, y: y + 0.5 };
+      }
+      if (edge === "bottom") {
+        return { x: x + 0.5, y: y + 1 };
+      }
+      return { x, y: y + 0.5 };
+    }
+
+    function collectSegments(mask, width, height) {
+      const segments = [];
+
+      function addSegment(x, y, edgeA, edgeB) {
+        segments.push([segmentPoint(x, y, edgeA), segmentPoint(x, y, edgeB)]);
+      }
+
+      for (let y = 0; y < height - 1; y += 1) {
+        for (let x = 0; x < width - 1; x += 1) {
+          const topLeft = mask[y * width + x];
+          const topRight = mask[y * width + x + 1];
+          const bottomRight = mask[(y + 1) * width + x + 1];
+          const bottomLeft = mask[(y + 1) * width + x];
+          const index = (topLeft << 3) | (topRight << 2) | (bottomRight << 1) | bottomLeft;
+
+          switch (index) {
+            case 1:
+              addSegment(x, y, "left", "bottom");
+              break;
+            case 2:
+              addSegment(x, y, "bottom", "right");
+              break;
+            case 3:
+              addSegment(x, y, "left", "right");
+              break;
+            case 4:
+              addSegment(x, y, "top", "right");
+              break;
+            case 5:
+              addSegment(x, y, "top", "left");
+              addSegment(x, y, "bottom", "right");
+              break;
+            case 6:
+              addSegment(x, y, "top", "bottom");
+              break;
+            case 7:
+              addSegment(x, y, "top", "left");
+              break;
+            case 8:
+              addSegment(x, y, "top", "left");
+              break;
+            case 9:
+              addSegment(x, y, "top", "bottom");
+              break;
+            case 10:
+              addSegment(x, y, "top", "right");
+              addSegment(x, y, "left", "bottom");
+              break;
+            case 11:
+              addSegment(x, y, "top", "right");
+              break;
+            case 12:
+              addSegment(x, y, "left", "right");
+              break;
+            case 13:
+              addSegment(x, y, "bottom", "right");
+              break;
+            case 14:
+              addSegment(x, y, "left", "bottom");
+              break;
+            default:
+              break;
+          }
+        }
+      }
+
+      return segments;
+    }
+
+    function pointKey(point) {
+      return point.x.toFixed(2) + "," + point.y.toFixed(2);
+    }
+
+    function samePoint(a, b) {
+      return Math.abs(a.x - b.x) < 0.001 && Math.abs(a.y - b.y) < 0.001;
+    }
+
+    function assemblePaths(segments) {
+      const adjacency = new Map();
+      const visited = new Uint8Array(segments.length);
+
+      segments.forEach((segment, index) => {
+        segment.forEach((point) => {
+          const key = pointKey(point);
+          if (!adjacency.has(key)) {
+            adjacency.set(key, []);
+          }
+          adjacency.get(key).push(index);
+        });
+      });
+
+      function extend(path, atStart) {
+        let growing = true;
+        while (growing) {
+          growing = false;
+          const endpoint = atStart ? path[0] : path[path.length - 1];
+          const links = adjacency.get(pointKey(endpoint)) || [];
+          for (const segmentIndex of links) {
+            if (visited[segmentIndex]) {
+              continue;
+            }
+            visited[segmentIndex] = 1;
+            const segment = segments[segmentIndex];
+            const nextPoint = samePoint(segment[0], endpoint) ? segment[1] : segment[0];
+            if (atStart) {
+              path.unshift(nextPoint);
+            } else {
+              path.push(nextPoint);
+            }
+            growing = true;
+            break;
+          }
+        }
+      }
+
+      const paths = [];
+      for (let index = 0; index < segments.length; index += 1) {
+        if (visited[index]) {
+          continue;
+        }
+        visited[index] = 1;
+        const path = [segments[index][0], segments[index][1]];
+        extend(path, false);
+        extend(path, true);
+        paths.push(path);
+      }
+      return paths;
+    }
+
+    function perpendicularDistance(point, start, end) {
+      const denominator = Math.hypot(end.x - start.x, end.y - start.y) || 1;
+      return Math.abs(
+        (end.y - start.y) * point.x -
+        (end.x - start.x) * point.y +
+        end.x * start.y -
+        end.y * start.x
+      ) / denominator;
+    }
+
+    function simplifyPath(points, epsilon) {
+      if (points.length <= 2) {
+        return points.slice();
+      }
+
+      let maxDistance = 0;
+      let splitIndex = 0;
+      for (let index = 1; index < points.length - 1; index += 1) {
+        const currentDistance = perpendicularDistance(points[index], points[0], points[points.length - 1]);
+        if (currentDistance > maxDistance) {
+          maxDistance = currentDistance;
+          splitIndex = index;
+        }
+      }
+
+      if (maxDistance <= epsilon) {
+        return [points[0], points[points.length - 1]];
+      }
+
+      const left = simplifyPath(points.slice(0, splitIndex + 1), epsilon);
+      const right = simplifyPath(points.slice(splitIndex), epsilon);
+      return left.slice(0, -1).concat(right);
+    }
+
+    function polylineLength(points, closed) {
+      let total = 0;
+      for (let index = 1; index < points.length; index += 1) {
+        total += distance(points[index - 1], points[index]);
+      }
+      if (closed && points.length > 2) {
+        total += distance(points[points.length - 1], points[0]);
+      }
+      return total;
+    }
+
+    function preparePaths(rawPaths, processSize) {
+      const epsilon = 3 - (Number(detailLevel.value) / 100) * 2.1;
+      const scale = VECTOR_SIZE / processSize;
+      const prepared = [];
+
+      for (const rawPath of rawPaths) {
+        if (rawPath.length < 3) {
+          continue;
+        }
+
+        const closed = samePoint(rawPath[0], rawPath[rawPath.length - 1]);
+        const openPath = closed ? rawPath.slice(0, -1) : rawPath.slice();
+        const simplified = simplifyPath(openPath, epsilon);
+        if (polylineLength(simplified, closed) < 14) {
+          continue;
+        }
+
+        const points = simplified.map((point) => ({
+          x: (point.x - 1) * scale,
+          y: (point.y - 1) * scale
+        }));
+
+        prepared.push({ points, closed });
+      }
+
+      return centerPreparedPaths(prepared);
+    }
+
+    function centerPreparedPaths(paths) {
+      if (!paths.length) {
+        return paths;
+      }
+      const points = paths.flatMap((path) => path.points);
+      if (!points.length) {
+        return paths;
+      }
+      const minX = Math.min(...points.map((point) => point.x));
+      const maxX = Math.max(...points.map((point) => point.x));
+      const minY = Math.min(...points.map((point) => point.y));
+      const maxY = Math.max(...points.map((point) => point.y));
+      const offsetX = CUP_CENTER.x - (minX + maxX) / 2;
+      const offsetY = CUP_CENTER.y - (minY + maxY) / 2;
+      return paths.map((path) => ({
+        ...path,
+        points: path.points.map((point) => ({
+          x: point.x + offsetX,
+          y: point.y + offsetY
+        }))
+      }));
+    }
+
+    function vectorizeImage() {
+      if (!state.uploadedImage) {
+        return;
+      }
+
+      if (state.vectorizeTimer) {
+        clearTimeout(state.vectorizeTimer);
+        state.vectorizeTimer = 0;
+      }
+
+      stopPrinting(true);
+      state.processing = true;
+      updateReadouts();
+      setStatus("Tracing is running. Contours and filled areas are being calculated.", "Vectorizing");
+
+      const processSize = Math.round(140 + Number(detailLevel.value) * 1.4);
+      processCanvas.width = processSize;
+      processCanvas.height = processSize;
+      processCtx.clearRect(0, 0, processSize, processSize);
+      const fit = getFittedRect(state.uploadedImage, processSize);
+      processCtx.drawImage(state.uploadedImage, fit.x, fit.y, fit.width, fit.height);
+
+      const pixels = processCtx.getImageData(0, 0, processSize, processSize).data;
+      const binary = buildMask(pixels, processSize, processSize);
+      const smoothedMask = smoothMask(binary.mask, binary.width, binary.height);
+      const segments = collectSegments(smoothedMask, binary.width, binary.height);
+      const rawPaths = assemblePaths(segments);
+
+      state.paths = preparePaths(rawPaths, processSize);
+      state.processing = false;
+      const renderPaths = evaluateBounds();
+
+      drawMachineCanvas(renderPaths);
+      renderCupPreview(renderPaths);
+      printPreviewCtx.clearRect(0, 0, PREVIEW_SIZE, PREVIEW_SIZE);
+      movePrintHead(null, false);
+      progressBar.style.width = "0%";
+
+      if (state.outOfBounds) {
+        state.showMachineCanvas = true;
+      }
+
+      updateReadouts();
+
+      if (state.paths.length) {
+        if (state.outOfBounds) {
+          setStatus("Artwork exceeds the cup area. Adjust Cup Scale, Threshold, or Invert.", "Error");
+        } else {
+          setStatus(getClosedPathCount() + " filled areas detected. Ready for cup preview.", "Ready");
+        }
+        triggerMotion(previewShell, "motion-glow");
+      } else {
+        setStatus("No clear contours found. Adjust Threshold or Invert.", "Adjust");
+      }
+    }
+
+    function scheduleVectorize() {
+      updateReadouts();
+      if (!state.uploadedImage) {
+        return;
+      }
+      if (state.vectorizeTimer) {
+        clearTimeout(state.vectorizeTimer);
+      }
+      state.vectorizeTimer = setTimeout(vectorizeImage, 140);
+    }
+
+    async function uploadFileToBackend(file) {
+      const formData = new FormData();
+      formData.append("file", file);
+      try {
+        const response = await fetch("/api/upload", {
+          method: "POST",
+          body: formData
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload.error || "Upload failed.");
+        }
+        state.backendUpload = payload;
+        setStatus("Backend upload saved: " + payload.filename, "Ready");
+      } catch (error) {
+        state.backendUpload = null;
+        setWarning(error.message || "Backend upload failed.", "warning");
+      }
+    }
+
+    function handleUpload(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) {
+        return;
+      }
+
+      const image = new Image();
+      if (state.objectUrl) {
+        URL.revokeObjectURL(state.objectUrl);
+      }
+
+      state.objectUrl = URL.createObjectURL(file);
+      image.onload = () => {
+        state.activeTab = "image";
+        storeModeSource("image", image, file.name);
+        triggerMotion(studioPanel, "motion-rise");
+        uploadFileToBackend(file);
+        vectorizeImage();
+      };
+      image.onerror = () => {
+        setWarning("This file could not be loaded as an image or SVG.", "error");
+      };
+      image.src = state.objectUrl;
+    }
+
+    function applyCupScale() {
+      const renderPaths = evaluateBounds();
+      drawMachineCanvas(renderPaths);
+      renderCupPreview(renderPaths);
+      printPreviewCtx.clearRect(0, 0, PREVIEW_SIZE, PREVIEW_SIZE);
+      movePrintHead(null, false);
+      progressBar.style.width = "0%";
+
+      if (!state.processing && !state.printing && state.paths.length) {
+        if (state.outOfBounds) {
+          state.showMachineCanvas = true;
+          setStatus("Artwork exceeds the cup area. Reduce Cup Scale or adjust the artwork.", "Error");
+        } else {
+          setStatus(getClosedPathCount() + " filled areas detected. Ready for cup preview.", "Ready");
+        }
+      }
+
+      updateReadouts();
+    }
+
+    function toggleInvert() {
+      if (!state.uploadedImage) {
+        setStatus("Upload an image or SVG first.", "Waiting");
+        return;
+      }
+      state.invert = !state.invert;
+      vectorizeImage();
+    }
+
+    function resetControls() {
+      threshold.value = 56;
+      detailLevel.value = 68;
+      cupScale.value = 100;
+      state.invert = false;
+      state.showMachineCanvas = false;
+      applyCupScale();
+
+      if (state.activeTab === "text") {
+        generateTextSource();
+      } else if (state.activeTab === "preset") {
+        applySelectedPreset();
+      } else if (state.uploadedImage) {
+        vectorizeImage();
+      } else {
+        setStatus("Controls reset. Upload an image or SVG next.", "Waiting");
+      }
+    }
+
+    function toggleRaster() {
+      state.showRaster = !state.showRaster;
+      drawMachineCanvas();
+      updateReadouts();
+    }
+
+    function toggleMachineCanvas() {
+      state.showMachineCanvas = !state.showMachineCanvas;
+      drawMachineCanvas();
+      updateReadouts();
+      triggerMotion(previewShell, "motion-swap");
+      triggerMotion(machineCanvasToggle, "motion-pulse");
+    }
+
+    function handleDetailChange() {
+      if (state.activeTab === "text") {
+        generateTextSource();
+        return;
+      }
+
+      if (state.activeTab === "preset") {
+        applySelectedPreset();
+        return;
+      }
+
+      scheduleVectorize();
+    }
+
+    function formatTofPayload(payload) {
+      if (!payload || !Number.isFinite(Number(payload.z_mm))) {
+        return "-- mm";
+      }
+      const raw = Number(payload.raw_distance_mm ?? payload.distance_mm).toFixed(1);
+      const z = Number(payload.z_mm).toFixed(1);
+      const cup = payload.cup_present ? "cup" : "clear";
+      return raw + " -> Z " + z + " mm " + cup + (payload.simulated ? " sim" : "");
+    }
+
+    function formatQuickButtons(buttons) {
+      const entries = Object.entries(buttons || {});
+      if (!entries.length) {
+        return "Idle";
+      }
+      return entries.map(([key, value]) => key.replace("quick_button_", "B") + ":" + (value ? "pressed" : "idle")).join(" ");
+    }
+
+    function applyHardwareState(payload) {
+      if (!payload) {
+        return;
+      }
+      state.hardwareState = {
+        ...state.hardwareState,
+        ...payload
+      };
+      systemSwitchValue.textContent = state.hardwareState.system_enabled ? "Enabled" : "Switch Off";
+      quickButtonsValue.textContent = formatQuickButtons(state.hardwareState.quick_buttons);
+      caseLedRequestedValue.textContent = state.hardwareState.case_led_enabled ? "On" : "Off";
+      caseLedPhysicalValue.textContent = state.hardwareState.case_led_output_active ? "On" : "Off";
+      caseLedHint.textContent = state.hardwareState.system_enabled
+        ? "The case LED can be toggled from the Advanced Tab."
+        : "System switch is off. The case LED remains physically off until the switch is enabled again.";
+      caseLedToggleButton.disabled = !state.hardwareState.system_enabled && !state.hardwareState.case_led_enabled;
+      caseLedToggleButton.textContent = state.hardwareState.case_led_enabled ? "Turn Case LED Off" : "Turn Case LED On";
+      updateReadouts();
+    }
+
+    function applyMachineConfig(payload) {
+      if (!payload) {
+        return;
+      }
+      state.machineConfig = payload;
+      printCenterX.value = Number(payload.print_center_x_mm ?? 100);
+      printCenterY.value = Number(payload.print_center_y_mm ?? 100);
+      nozzleMm.value = Number(payload.nozzle_mm ?? 4);
+      tofOffsetX.value = Number(payload.tof_offset_x_mm || 0);
+      tofOffsetY.value = Number(payload.tof_offset_y_mm || 0);
+      tofOffsetZ.value = Number(payload.tof_offset_z_mm || 0);
+      cupThreshold.value = Number(payload.cup_present_threshold_mm || 90);
+      tankServoInsertedAngle.value = Number(payload.tank_servo_inserted_angle || 0);
+      tankServoRemovedAngle.value = Number(payload.tank_servo_removed_angle || 45);
+      tankServoSettleMs.value = Number(payload.tank_servo_settle_ms || 300);
+      if (payload.tof) {
+        state.tofReading = payload.tof;
+        tofValue.textContent = formatTofPayload(payload.tof);
+      }
+      if (payload.tank_state) {
+        applyTankState(payload.tank_state);
+      }
+      applyHardwareState(payload);
+    }
+
+    async function loadMachineConfig() {
+      try {
+        const response = await fetch("/api/machine-config");
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload.error || "Machine Config could not be loaded.");
+        }
+        applyMachineConfig(payload);
+        return payload;
+      } catch (error) {
+        setWarning(error.message || "Machine Config could not be loaded.", "warning");
+      }
+    }
+
+    async function saveMachineConfig() {
+      const payload = {
+        print_center_x_mm: Number(printCenterX.value),
+        print_center_y_mm: Number(printCenterY.value),
+        nozzle_mm: Number(nozzleMm.value),
+        tof_offset_x_mm: Number(tofOffsetX.value),
+        tof_offset_y_mm: Number(tofOffsetY.value),
+        tof_offset_z_mm: Number(tofOffsetZ.value),
+        cup_present_threshold_mm: Number(cupThreshold.value),
+        tank_servo_inserted_angle: Number(tankServoInsertedAngle.value),
+        tank_servo_removed_angle: Number(tankServoRemovedAngle.value),
+        tank_servo_settle_ms: Number(tankServoSettleMs.value)
+      };
+      if (!Number.isFinite(payload.print_center_x_mm) ||
+          !Number.isFinite(payload.print_center_y_mm) ||
+          !Number.isFinite(payload.nozzle_mm) ||
+          payload.nozzle_mm <= 0 ||
+          !Number.isFinite(payload.tof_offset_x_mm) ||
+          !Number.isFinite(payload.tof_offset_y_mm) ||
+          !Number.isFinite(payload.tof_offset_z_mm) ||
+          !Number.isFinite(payload.cup_present_threshold_mm) ||
+          !Number.isFinite(payload.tank_servo_inserted_angle) ||
+          !Number.isFinite(payload.tank_servo_removed_angle) ||
+          !Number.isFinite(payload.tank_servo_settle_ms)) {
+        setWarning("Machine Config contains invalid numbers.", "error");
+        return;
+      }
+      try {
+        const response = await fetch("/api/machine-config", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const saved = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(saved.error || "Machine Config could not be saved.");
+        }
+        clearWarning();
+        applyMachineConfig(saved);
+        setStatus("Machine Config saved.", "Ready");
+      } catch (error) {
+        setWarning(error.message || "Machine Config could not be saved.", "warning");
+      }
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function getPhaseDefinition(phaseId) {
+      return RECIPE_PHASES.find((phase) => phase.id === phaseId) || RECIPE_PHASES[0];
+    }
+
+    function createEmptyRecipe(name) {
+      return {
+        version: 3,
+        name: name || "Recipe",
+        phases: RECIPE_PHASES.reduce((phases, phase) => {
+          phases[phase.id] = [];
+          return phases;
+        }, {})
+      };
+    }
+
+    function normalizeRecipeForBuilder(recipe) {
+      const normalized = createEmptyRecipe(recipe && recipe.name ? recipe.name : "Recipe");
+      const phases = recipe && recipe.phases && typeof recipe.phases === "object" ? recipe.phases : {};
+      RECIPE_PHASES.forEach((phase) => {
+        normalized.phases[phase.id] = Array.isArray(phases[phase.id]) ? phases[phase.id] : [];
+      });
+      return normalized;
+    }
+
+    function getActionsAtPath(path) {
+      if (!state.currentRecipe) {
+        state.currentRecipe = createEmptyRecipe();
+      }
+      const parts = String(path || state.activeRecipePhase).split(".").filter(Boolean);
+      const phaseId = parts.shift() || state.activeRecipePhase;
+      let actions = state.currentRecipe.phases[phaseId];
+      if (!Array.isArray(actions)) {
+        actions = [];
+        state.currentRecipe.phases[phaseId] = actions;
+      }
+      parts.forEach((part) => {
+        const action = actions[Number(part)];
+        if (!action || action.type !== "repeat") {
+          return;
+        }
+        if (!Array.isArray(action.actions)) {
+          action.actions = [];
+        }
+        actions = action.actions;
+      });
+      return actions;
+    }
+
+    function getActionAt(path, index) {
+      return getActionsAtPath(path)[Number(index)];
+    }
+
+    function renderRecipePhaseTabs() {
+      recipePhaseTabs.innerHTML = RECIPE_PHASES.map((phase) => (
+        '<button class="recipe-phase-tab' + (state.activeRecipePhase === phase.id ? " active" : "") + '" type="button" data-recipe-phase="' + phase.id + '">' + phase.label + '</button>'
+      )).join("");
+    }
+
+    function renderRecipeBuilder() {
+      if (!state.currentRecipe) {
+        state.currentRecipe = createEmptyRecipe();
+      }
+      renderRecipePhaseTabs();
+      const phase = getPhaseDefinition(state.activeRecipePhase);
+      recipeNameInput.value = state.currentRecipe.name || "";
+      recipeBuilder.innerHTML =
+        renderActionList(state.currentRecipe.phases[phase.id] || [], phase.id, 0) +
+        '<div class="advanced-actions">' +
+          '<button class="advanced-button" type="button" data-action="add-action" data-action-type="set" data-path="' + phase.id + '">Add Set</button>' +
+          '<button class="advanced-button" type="button" data-action="add-action" data-action-type="wait" data-path="' + phase.id + '">Add Wait</button>' +
+          '<button class="advanced-button" type="button" data-action="add-action" data-action-type="repeat" data-path="' + phase.id + '">Add Repeat</button>' +
+        '</div>';
+    }
+
+    function renderActionList(actions, path, depth) {
+      if (!actions.length) {
+        return '<div class="recipe-empty">No actions in this phase.</div>';
+      }
+      return '<div class="recipe-action-list' + (depth ? " recipe-nested" : "") + '">' +
+        actions.map((action, index) => renderRecipeAction(action, path, index, depth)).join("") +
+        '</div>';
+    }
+
+    function renderRecipeAction(action, path, index, depth) {
+      const title = action.type === "set" ? "Set Outputs" : action.type === "wait" ? "Wait" : "Repeat";
+      return '<div class="recipe-action-row" data-path="' + path + '" data-index="' + index + '">' +
+        '<div class="recipe-action-head">' +
+          '<span>' + title + '</span>' +
+          '<button class="recipe-icon-button" type="button" title="Move up" data-action="move-action" data-direction="-1" data-path="' + path + '" data-index="' + index + '">^</button>' +
+          '<button class="recipe-icon-button" type="button" title="Move down" data-action="move-action" data-direction="1" data-path="' + path + '" data-index="' + index + '">v</button>' +
+          '<button class="recipe-icon-button" type="button" title="Delete" data-action="delete-action" data-path="' + path + '" data-index="' + index + '">x</button>' +
+        '</div>' +
+        renderActionControls(action, path, index, depth) +
+      '</div>';
+    }
+
+    function renderActionControls(action, path, index, depth) {
+      if (action.type === "wait") {
+        const ms = Number(action.duration_ms) || 1000;
+        const useSeconds = ms % 1000 === 0;
+        return '<div class="recipe-action-controls mode-inline-grid">' +
+          '<label class="mode-field"><span class="mode-label">Duration</span><input class="mode-input" type="number" min="0.001" step="0.001" value="' + (useSeconds ? ms / 1000 : ms) + '" data-role="wait-value" data-path="' + path + '" data-index="' + index + '"></label>' +
+          '<label class="mode-field"><span class="mode-label">Unit</span><select class="mode-select" data-role="wait-unit" data-path="' + path + '" data-index="' + index + '">' +
+            '<option value="s"' + (useSeconds ? " selected" : "") + '>Seconds</option>' +
+            '<option value="ms"' + (!useSeconds ? " selected" : "") + '>Milliseconds</option>' +
+          '</select></label>' +
+        '</div>';
+      }
+
+      if (action.type === "repeat") {
+        const nestedPath = path + "." + index;
+        return '<div class="recipe-action-controls">' +
+          '<label class="mode-field"><span class="mode-label">Count</span><input class="mode-input" type="number" min="1" step="1" value="' + (Number(action.count) || 1) + '" data-role="repeat-count" data-path="' + path + '" data-index="' + index + '"></label>' +
+          renderActionList(Array.isArray(action.actions) ? action.actions : [], nestedPath, depth + 1) +
+          '<div class="advanced-actions">' +
+            '<button class="advanced-button" type="button" data-action="add-action" data-action-type="set" data-path="' + nestedPath + '">Add Set</button>' +
+            '<button class="advanced-button" type="button" data-action="add-action" data-action-type="wait" data-path="' + nestedPath + '">Add Wait</button>' +
+            '<button class="advanced-button" type="button" data-action="add-action" data-action-type="repeat" data-path="' + nestedPath + '">Add Repeat</button>' +
+          '</div>' +
+        '</div>';
+      }
+
+      return '<div class="recipe-output-grid">' +
+        getPhaseDefinition(path.split(".")[0]).outputs.map((output) => {
+          const included = action.outputs && Object.prototype.hasOwnProperty.call(action.outputs, output);
+          const enabled = included ? Boolean(action.outputs[output]) : true;
+          return '<div class="recipe-output">' +
+            '<label><input type="checkbox" ' + (included ? "checked" : "") + ' data-role="output-enabled" data-output="' + output + '" data-path="' + path + '" data-index="' + index + '"> ' + RECIPE_OUTPUT_LABELS[output] + '</label>' +
+            '<select class="mode-select" ' + (!included ? "disabled" : "") + ' data-role="output-value" data-output="' + output + '" data-path="' + path + '" data-index="' + index + '">' +
+              '<option value="true"' + (enabled ? " selected" : "") + '>On</option>' +
+              '<option value="false"' + (!enabled ? " selected" : "") + '>Off</option>' +
+            '</select>' +
+          '</div>';
+        }).join("") +
+      '</div>';
+    }
+
+    function createRecipeAction(type, path) {
+      if (type === "wait") {
+        return { type: "wait", duration_ms: 1000 };
+      }
+      if (type === "repeat") {
+        return { type: "repeat", count: 2, actions: [] };
+      }
+      const phase = getPhaseDefinition(path.split(".")[0]);
+      return { type: "set", outputs: { [phase.outputs[0]]: true } };
+    }
+
+    function updateWaitAction(path, index) {
+      const action = getActionAt(path, index);
+      if (!action) {
+        return;
+      }
+      const valueInput = recipeBuilder.querySelector('[data-role="wait-value"][data-path="' + path + '"][data-index="' + index + '"]');
+      const unitSelect = recipeBuilder.querySelector('[data-role="wait-unit"][data-path="' + path + '"][data-index="' + index + '"]');
+      const value = Math.max(0.001, Number(valueInput && valueInput.value ? valueInput.value : 1));
+      action.duration_ms = unitSelect && unitSelect.value === "ms" ? Math.max(1, Math.round(value)) : Math.max(1, Math.round(value * 1000));
+    }
+
+    function handleRecipeBuilderClick(event) {
+      const button = event.target.closest("button[data-action], button[data-recipe-phase]");
+      if (!button) {
+        return;
+      }
+      if (button.dataset.recipePhase) {
+        state.activeRecipePhase = button.dataset.recipePhase;
+        renderRecipeBuilder();
+        return;
+      }
+
+      const actions = getActionsAtPath(button.dataset.path);
+      const index = Number(button.dataset.index);
+      if (button.dataset.action === "add-action") {
+        actions.push(createRecipeAction(button.dataset.actionType, button.dataset.path));
+      } else if (button.dataset.action === "delete-action") {
+        actions.splice(index, 1);
+      } else if (button.dataset.action === "move-action") {
+        const nextIndex = index + Number(button.dataset.direction);
+        if (nextIndex >= 0 && nextIndex < actions.length) {
+          const moved = actions.splice(index, 1)[0];
+          actions.splice(nextIndex, 0, moved);
+        }
+      }
+      renderRecipeBuilder();
+    }
+
+    function handleRecipeBuilderChange(event) {
+      const target = event.target;
+      const role = target.dataset.role;
+      if (!role) {
+        return;
+      }
+      const action = getActionAt(target.dataset.path, target.dataset.index);
+      if (!action) {
+        return;
+      }
+      if (role === "wait-value" || role === "wait-unit") {
+        updateWaitAction(target.dataset.path, target.dataset.index);
+      } else if (role === "repeat-count") {
+        action.count = Math.max(1, Math.round(Number(target.value) || 1));
+      } else if (role === "output-enabled") {
+        if (!action.outputs) {
+          action.outputs = {};
+        }
+        if (target.checked) {
+          action.outputs[target.dataset.output] = true;
+        } else {
+          delete action.outputs[target.dataset.output];
+        }
+        renderRecipeBuilder();
+      } else if (role === "output-value") {
+        if (!action.outputs) {
+          action.outputs = {};
+        }
+        action.outputs[target.dataset.output] = target.value === "true";
+      }
+    }
+
+    async function loadRecipeList() {
+      try {
+        const response = await fetch("/api/recipes");
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload.error || "Recipes could not be loaded.");
+        }
+        state.recipes = payload.recipes || [];
+        recipeSelect.innerHTML = state.recipes.map((name) => '<option value="' + escapeHtml(name) + '">' + escapeHtml(name) + '</option>').join("");
+        if (!state.activeRecipe && state.recipes.length) {
+          state.activeRecipe = state.recipes[0];
+        }
+        if (state.activeRecipe && !state.recipes.includes(state.activeRecipe) && state.recipes.length) {
+          state.activeRecipe = state.recipes[0];
+        }
+        recipeSelect.value = state.activeRecipe;
+        if (state.activeRecipe) {
+          await loadRecipe(state.activeRecipe);
+        } else {
+          state.currentRecipe = createEmptyRecipe("Recipe");
+          renderRecipeBuilder();
+        }
+      } catch (error) {
+        setWarning(error.message || "Recipes could not be loaded.", "warning");
+      }
+    }
+
+    async function loadRecipe(name) {
+      if (!name) {
+        state.currentRecipe = createEmptyRecipe("Recipe");
+        renderRecipeBuilder();
+        return;
+      }
+      try {
+        const response = await fetch("/api/recipes/" + encodeURIComponent(name));
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload.error || "Recipe could not be loaded.");
+        }
+        state.activeRecipe = name;
+        state.currentRecipe = normalizeRecipeForBuilder(payload);
+        renderRecipeBuilder();
+      } catch (error) {
+        setWarning(error.message || "Recipe could not be loaded.", "warning");
+      }
+    }
+
+    async function saveRecipe() {
+      const recipe = normalizeRecipeForBuilder(state.currentRecipe || createEmptyRecipe());
+      recipe.name = (recipeNameInput.value || recipe.name || "Recipe").trim();
+      const name = recipeSelect.value || state.activeRecipe || recipe.name || "custom";
+      try {
+        const response = await fetch("/api/recipes/" + encodeURIComponent(name), {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(recipe)
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload.error || "Recipe could not be saved.");
+        }
+        clearWarning();
+        state.currentRecipe = normalizeRecipeForBuilder(payload.recipe || recipe);
+        setStatus("Recipe saved: " + payload.name, "Ready");
+        await loadRecipeList();
+      } catch (error) {
+        setWarning(error.message || "Recipe could not be saved.", "warning");
+      }
+    }
+
+    async function readTof() {
+      try {
+        const response = await fetch("/api/tof");
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload.error || "ToF could not be read.");
+        }
+        state.tofReading = payload;
+        tofValue.textContent = formatTofPayload(payload);
+        return payload;
+      } catch (error) {
+        setWarning(error.message || "ToF could not be read.", "warning");
+      }
+    }
+
+    async function moveTank(angle, label) {
+      try {
+        const response = await fetch("/api/tank", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ angle })
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload.error || "Tank servo could not be set.");
+        }
+        state.tankStatus = label + (payload.simulated ? " (sim)" : "");
+        tankValue.textContent = state.tankStatus;
+        if (payload.tank) {
+          applyTankState(payload.tank);
+        }
+      } catch (error) {
+        setWarning(error.message || "Tank servo could not be set.", "warning");
+      }
+    }
+
+    async function setCaseLed(enabled) {
+      try {
+        const response = await fetch("/api/case-led", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ enabled })
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload.error || "Case LED could not be updated.");
+        }
+        clearWarning();
+        applyHardwareState(payload);
+        setStatus("Case LED " + (enabled ? "enabled" : "disabled") + ".", "Ready");
+      } catch (error) {
+        setWarning(error.message || "Case LED could not be updated.", "warning");
+      }
+    }
+
+    async function homeMachine() {
+      try {
+        const response = await fetch("/api/motion/home", { method: "POST" });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload.error || "Homing could not be started.");
+        }
+        clearWarning();
+        setStatus("Homing complete.", "Ready");
+      } catch (error) {
+        setWarning(error.message || "Homing could not be started.", "warning");
+      }
+    }
+
+    async function jogAxis(axis, direction) {
+      const step = Number(jogStepSelect.value) || 1;
+      try {
+        const response = await fetch("/api/motion/jog", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            axis,
+            distance_mm: step * Number(direction)
+          })
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload.error || "Axis could not be moved.");
+        }
+        clearWarning();
+        setStatus(axis + " moved " + (step * Number(direction)).toFixed(1) + " mm.", "Ready");
+      } catch (error) {
+        setWarning(error.message || "Axis could not be moved.", "warning");
+      }
+    }
+
+    function showTouchInfo(message) {
+      if (!message || !window.matchMedia("(pointer: coarse)").matches) {
+        return;
+      }
+      touchInfoPopover.textContent = message;
+      touchInfoPopover.hidden = false;
+    }
+
+    function hideTouchInfo() {
+      touchInfoPopover.hidden = true;
+    }
+
+    function handleLogoTripleTap() {
+      const now = Date.now();
+      if (state.logoTapTimer && now - state.logoTapTimer > 900) {
+        state.logoTapCount = 0;
+      }
+      state.logoTapTimer = now;
+      state.logoTapCount += 1;
+      if (state.logoTapCount < 3) {
+        return;
+      }
+      state.logoTapCount = 0;
+      state.advancedOpen = !state.advancedOpen;
+      updateAdvancedVisibility();
+    }
+
+    imageUpload.addEventListener("change", handleUpload);
+    presetTab.addEventListener("click", () => {
+      triggerMotion(presetTab, "motion-pulse");
+      switchTab("preset");
+    });
+    textTab.addEventListener("click", () => {
+      triggerMotion(textTab, "motion-pulse");
+      switchTab("text");
+    });
+    imageTab.addEventListener("click", () => {
+      triggerMotion(imageTab, "motion-pulse");
+      switchTab("image");
+    });
+    textInput.addEventListener("input", () => {
+      if (state.activeTab === "text") {
+        generateTextSource();
+      }
+    });
+    textFont.addEventListener("change", generateTextSource);
+    textWeight.addEventListener("change", generateTextSource);
+    threshold.addEventListener("input", scheduleVectorize);
+    detailLevel.addEventListener("input", handleDetailChange);
+    cupSizeSelect.addEventListener("change", () => {
+      clearWarning();
+      applyCupScale();
+    });
+    cupScale.addEventListener("input", applyCupScale);
+    revectorizeButton.addEventListener("click", vectorizeImage);
+    invertButton.addEventListener("click", toggleInvert);
+    invertIconButton.addEventListener("click", toggleInvert);
+    resetIconButton.addEventListener("click", resetControls);
+    rasterToggleButton.addEventListener("click", toggleRaster);
+    machineCanvasToggle.addEventListener("click", toggleMachineCanvas);
+    printButton.addEventListener("click", () => {
+      if (state.printing) {
+        abortPrinting();
+        return;
+      }
+      beginPrinting();
+    });
+
+    logoWrap.addEventListener("click", handleLogoTripleTap);
+    logoWrap.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        handleLogoTripleTap();
+      }
+    });
+    recipeSelect.addEventListener("change", () => loadRecipe(recipeSelect.value));
+    recipeNameInput.addEventListener("input", () => {
+      if (!state.currentRecipe) {
+        state.currentRecipe = createEmptyRecipe();
+      }
+      state.currentRecipe.name = recipeNameInput.value;
+    });
+    recipePhaseTabs.addEventListener("click", handleRecipeBuilderClick);
+    recipeBuilder.addEventListener("click", handleRecipeBuilderClick);
+    recipeBuilder.addEventListener("input", handleRecipeBuilderChange);
+    recipeBuilder.addEventListener("change", handleRecipeBuilderChange);
+    reloadRecipesButton.addEventListener("click", loadRecipeList);
+    saveRecipeButton.addEventListener("click", saveRecipe);
+    reloadMachineConfigButton.addEventListener("click", loadMachineConfig);
+    saveMachineConfigButton.addEventListener("click", saveMachineConfig);
+    tofReadButton.addEventListener("click", readTof);
+    homeAllButton.addEventListener("click", homeMachine);
+    document.querySelectorAll("[data-jog-axis]").forEach((button) => {
+      button.addEventListener("click", () => jogAxis(button.dataset.jogAxis, button.dataset.jogDirection));
+    });
+    tankOpenButton.addEventListener("click", () => moveTank(90, "Open"));
+    tankCloseButton.addEventListener("click", () => moveTank(0, "Closed"));
+    caseLedToggleButton.addEventListener("click", () => setCaseLed(!state.hardwareState.case_led_enabled));
+    closeAdvancedButton.addEventListener("click", () => {
+      state.advancedOpen = false;
+      updateAdvancedVisibility();
+    });
+    document.querySelectorAll(".touch-info").forEach((button) => {
+      button.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        showTouchInfo(button.dataset.info);
+      });
+    });
+    document.addEventListener("click", (event) => {
+      if (event.target.closest(".touch-info") || event.target.closest("#touchInfoPopover")) {
+        return;
+      }
+      hideTouchInfo();
+    });
+
+    initSocketConnection();
+    loadPresets();
+    applyCupScale();
+    drawMachineCanvas();
+    renderCupPreview();
+    updateReadouts();
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

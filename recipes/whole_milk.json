@@ -1,0 +1,55 @@
+{
+  "version": 2,
+  "name": "Whole Milk",
+  "steps": [
+    {
+      "time_ms": 0,
+      "set": {
+        "heater": true,
+        "pump": true,
+        "vacuum": true
+      }
+    },
+    {
+      "time_ms": 2000,
+      "set": {
+        "flow_stop": true
+      }
+    },
+    {
+      "time_ms": 3200,
+      "set": {
+        "pump": false
+      }
+    },
+    {
+      "time_ms": 5600,
+      "set": {
+        "heater": false,
+        "vacuum": false,
+        "flow_stop": false
+      }
+    }
+  ],
+  "loops": [
+    {
+      "start_ms": 2400,
+      "repeat": 2,
+      "period_ms": 1000,
+      "steps": [
+        {
+          "offset_ms": 0,
+          "set": {
+            "pump": true
+          }
+        },
+        {
+          "offset_ms": 250,
+          "set": {
+            "pump": false
+          }
+        }
+      ]
+    }
+  ]
+}

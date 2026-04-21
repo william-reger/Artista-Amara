@@ -1,0 +1,83 @@
+{
+  "tof_offset_x_mm": 0.6,
+  "tof_offset_y_mm": 0.0,
+  "tof_offset_z_mm": 0.0,
+  "cup_present_threshold_mm": 90.0,
+  "tof_i2c_address": 41,
+  "led_pin_bcm": 9,
+  "case_led_enabled": true,
+  "tank_detect_pin_board": 24,
+  "tank_led_pin_board": 19,
+  "tank_servo_pin_board": 40,
+  "tank_present_pull_up": true,
+  "tank_present_active_low": true,
+  "tank_servo_inserted_angle": 0.0,
+  "tank_servo_removed_angle": 45.0,
+  "tank_servo_settle_ms": 300,
+  "pins": {
+    "heater": {
+      "name": "heater",
+      "pin": 30,
+      "active_high": true
+    },
+    "pump": {
+      "name": "pump",
+      "pin": 29,
+      "active_high": true
+    },
+    "flow_stop": {
+      "name": "flow_stop",
+      "pin": 28,
+      "active_high": true
+    },
+    "case_led": {
+      "name": "case_led",
+      "pin": 27,
+      "active_high": true
+    }
+  },
+  "input_pins": {
+    "system_switch": {
+      "name": "system_switch",
+      "board_pin": 7,
+      "pull_up": true,
+      "active_low": true,
+      "bounce_time_ms": 120
+    },
+    "tank_present": {
+      "name": "tank_present",
+      "board_pin": 24,
+      "pull_up": true,
+      "active_low": true,
+      "bounce_time_ms": 80
+    },
+    "quick_button_1": {
+      "name": "quick_button_1",
+      "board_pin": 29,
+      "pull_up": true,
+      "active_low": true,
+      "bounce_time_ms": 80
+    },
+    "quick_button_2": {
+      "name": "quick_button_2",
+      "board_pin": 31,
+      "pull_up": true,
+      "active_low": true,
+      "bounce_time_ms": 80
+    },
+    "quick_button_3": {
+      "name": "quick_button_3",
+      "board_pin": 26,
+      "pull_up": true,
+      "active_low": true,
+      "bounce_time_ms": 80
+    }
+  },
+  "output_pins": {
+    "vacuum_relay": {
+      "name": "vacuum_relay",
+      "board_pin": 23,
+      "active_high": true
+    }
+  }
+}

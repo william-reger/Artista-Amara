@@ -1,0 +1,41 @@
+{
+  "presets": [
+    {
+      "id": "heart",
+      "name": "Heart",
+      "caption": "Heart Fill",
+      "file": "presets/heart.svg"
+    },
+    {
+      "id": "tulip",
+      "name": "Tulip",
+      "caption": "Layered Tulip",
+      "file": "presets/tulip-stack.svg"
+    },
+    {
+      "id": "leaf",
+      "name": "Leaf Swirl",
+      "caption": "Leaf",
+      "file": "presets/leaf.svg"
+    },
+    {
+      "id": "artista-logo",
+      "name": "Amara Artista",
+      "caption": "Amara Logo",
+      "file": "presets/artista-logo.svg"
+    },
+    {
+      "id": "a-artista-logo",
+      "name": "Amara Artista A",
+      "caption": "Amara A Logo",
+      "file": "presets/a-artista-logo.svg"
+    },
+    {
+      "id": "fablab",
+      "name": "FabLab",
+      "caption": "FabLab Cube Logo",
+      "file": "presets/fablab.svg"
+    }
+    
+  ]
+}

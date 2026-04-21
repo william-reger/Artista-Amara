@@ -1,0 +1,498 @@
+﻿import unittest
+from pathlib import Path
+from unittest.mock import patch
+
+from app import RECIPE_DIR, UPLOAD_DIR, app, socketio
+from machine_config import MachineConfig
+from relay_sequencer import RelaySequencer
+
+
+class FakePrintManager:
+    def __init__(self):
+        self.started_gcode = None
+        self.started_recipe = None
+        self.started_recipe_name = None
+        self.aborted = False
+        self.active = False
+
+    def start_print(self, gcode, recipe=None, recipe_name=None):
+        self.started_gcode = gcode
+        self.started_recipe = recipe
+        self.started_recipe_name = recipe_name
+        self.active = True
+        return "job-1"
+
+    def abort(self):
+        self.aborted = True
+        self.active = False
+        return "job-1"
+
+    def is_active(self):
+        return self.active
+
+
+class FakeMarlin:
+    def __init__(self):
+        self.commands = []
+        self.timeout = None
+
+    def send_command(self, line, timeout=None):
+        self.commands.append(line)
+        return ["ok"]
+
+
+class FakeRelaySequencer:
+    def __init__(self):
+        self.state = {
+            "status": "idle",
+            "recipe": None,
+            "relay_state": {
+                "pump": False,
+                "heater": False,
+                "vacuum": False,
+                "flow_stop": False,
+            },
+            "elapsed_ms": 0,
+            "error": None,
+            "timeline_length": 0,
+        }
+        self.started = None
+        self.stopped = False
+
+    def start(self, recipe, recipe_name=None):
+        self.started = (recipe, recipe_name)
+        self.state["status"] = "running"
+        self.state["recipe"] = recipe_name or recipe["name"]
+        self.state["timeline_length"] = 1
+        return self.state["recipe"]
+
+    def stop(self):
+        self.stopped = True
+        self.state["status"] = "stopped"
+        return self.get_state()
+
+    def set_relays(self, values):
+        self.state["relay_state"].update(values)
+        return self.get_state()
+
+    def get_state(self):
+        return {
+            "status": self.state["status"],
+            "recipe": self.state["recipe"],
+            "relay_state": dict(self.state["relay_state"]),
+            "elapsed_ms": self.state["elapsed_ms"],
+            "error": self.state["error"],
+            "timeline_length": self.state["timeline_length"],
+        }
+
+    def is_active(self):
+        return self.state["status"] == "running"
+
+
+class FakeHardware:
+    def __init__(self, tank_present=True, system_enabled=True):
+        self.tank_present = tank_present
+        self.system_enabled = system_enabled
+        self.angle = None
+        self.case_led_enabled = False
+
+    def get_system_enabled(self):
+        return self.system_enabled
+
+    def get_hardware_state(self):
+        return {
+            "system_enabled": self.system_enabled,
+            "system_switch_closed": not self.system_enabled,
+            "quick_buttons": {},
+            "case_led_enabled": self.case_led_enabled,
+            "case_led_output_active": self.case_led_enabled and self.system_enabled,
+            "output_states": {},
+            "tank_present": self.tank_present,
+        }
+
+    def get_tank_state(self):
+        return {
+            "present": self.tank_present,
+            "servo_connected": self.tank_present,
+            "fault": False,
+            "status": "inserted" if self.tank_present else "missing",
+            "message": "Tank inserted" if self.tank_present else "Tank missing",
+            "simulated": False,
+            "angle": self.angle,
+        }
+
+    def read_tof_mm(self):
+        return 12.0
+
+    def read_tof_payload(self, allow_simulated=True):
+        return {
+            "distance_mm": 12.0,
+            "raw_distance_mm": 12.0,
+            "z_mm": 12.0,
+            "cup_present": True,
+            "simulated": False,
+            "offsets": {"x_mm": 0.0, "y_mm": 0.0, "z_mm": 0.0},
+        }
+
+    def update_config(self, config):
+        self.config = config
+
+    def set_case_led_enabled(self, enabled):
+        self.case_led_enabled = bool(enabled)
+        return self.get_hardware_state()
+
+    def set_output_pin(self, pin_name, enabled):
+        return True
+
+    def set_servo_angle(self, angle):
+        self.angle = float(angle)
+
+    def set_system_state_callback(self, callback):
+        self.callback = callback
+
+
+class AppSocketIOTest(unittest.TestCase):
+    def setUp(self):
+        self.recipe_path = RECIPE_DIR / "test-api-recipe.json"
+        self.hardware = FakeHardware(tank_present=True)
+        app.config["HARDWARE"] = self.hardware
+        app.config["PRINT_MANAGER"] = FakePrintManager()
+        app.config["RELAY_SEQUENCER"] = FakeRelaySequencer()
+        app.config["MARLIN"] = FakeMarlin()
+
+    def tearDown(self):
+        app.config.pop("PRINT_MANAGER", None)
+        app.config.pop("RELAY_SEQUENCER", None)
+        app.config.pop("HARDWARE", None)
+        app.config.pop("MARLIN", None)
+        app.config.pop("MACHINE_CONFIG", None)
+        if self.recipe_path.exists():
+            self.recipe_path.unlink()
+
+    def test_health_reports_socketio(self):
+        client = app.test_client()
+
+        response = client.get("/api/health")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json(), {"status": "ok", "socketio": True})
+
+    def test_machine_config_endpoint_includes_tank_state(self):
+        client = app.test_client()
+
+        response = client.get("/api/machine-config")
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        self.assertIn("tank_state", payload)
+        self.assertTrue(payload["tank_state"]["present"])
+        self.assertIn("tank_servo_inserted_angle", payload)
+        self.assertIn("nozzle_mm", payload)
+        self.assertIn("print_center_x_mm", payload)
+
+    def test_recipes_endpoint_still_lists_recipes(self):
+        client = app.test_client()
+
+        response = client.get("/api/recipes")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("recipes", response.get_json())
+
+    def test_presets_endpoint_lists_svg_files(self):
+        client = app.test_client()
+
+        response = client.get("/api/presets")
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        self.assertIn("presets", payload)
+        self.assertTrue(any(preset["file"].endswith(".svg") for preset in payload["presets"]))
+
+    def test_start_print_endpoint_starts_manager(self):
+        manager = FakePrintManager()
+        app.config["PRINT_MANAGER"] = manager
+        client = app.test_client()
+
+        response = client.post("/api/start-print", json={"gcode": ["G21", "M400"]})
+
+        self.assertEqual(response.status_code, 202)
+        self.assertEqual(response.get_json(), {"job_id": "job-1", "status": "started"})
+        self.assertEqual(manager.started_gcode, ["G21", "M400"])
+
+    def test_start_print_endpoint_passes_recipe_name_to_manager(self):
+        manager = FakePrintManager()
+        app.config["PRINT_MANAGER"] = manager
+        client = app.test_client()
+
+        response = client.post("/api/start-print", json={"gcode": ["G21"], "recipe": "oatmilk"})
+
+        self.assertEqual(response.status_code, 202)
+        self.assertEqual(manager.started_recipe_name, "oatmilk")
+        self.assertEqual(manager.started_recipe["version"], 3)
+
+    def test_start_print_rejects_missing_tank(self):
+        app.config["HARDWARE"] = FakeHardware(tank_present=False)
+        client = app.test_client()
+
+        response = client.post("/api/start-print", json={"gcode": ["G21"]})
+
+        self.assertEqual(response.status_code, 409)
+        self.assertIn("Tank", response.get_json()["error"])
+
+    def test_abort_endpoint_aborts_manager(self):
+        manager = FakePrintManager()
+        app.config["PRINT_MANAGER"] = manager
+        client = app.test_client()
+
+        response = client.post("/api/abort")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json(), {"job_id": "job-1", "status": "aborted"})
+        self.assertTrue(manager.aborted)
+
+    def test_gcode_endpoint_accepts_paths_and_saves_file(self):
+        client = app.test_client()
+        response = client.post(
+            "/api/gcode",
+            json={
+                "paths": [
+                    {
+                        "closed": True,
+                        "points": [
+                            {"x": 0, "y": 0},
+                            {"x": 100, "y": 0},
+                            {"x": 100, "y": 100},
+                            {"x": 0, "y": 100},
+                        ],
+                    }
+                ],
+                "coordinate_size": 100,
+                "cup_radius": 50,
+                "cup_size": "espresso",
+                "cup_scale": 0.5,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        self.assertTrue(payload["filename"].endswith(".gcode"))
+        self.assertEqual(payload["line_count"], len(payload["gcode"]))
+        self.assertEqual(payload["print_diameter_mm"], 45.0)
+        self.assertEqual(payload["effective_print_diameter_mm"], 22.5)
+        self.assertIn("M42 P29 S255", payload["gcode"])
+        target = UPLOAD_DIR / payload["filename"]
+        self.assertTrue(target.exists())
+        target.unlink()
+
+    def test_gcode_endpoint_requires_known_cup_size(self):
+        client = app.test_client()
+
+        response = client.post(
+            "/api/gcode",
+            json={
+                "paths": [
+                    {
+                        "closed": True,
+                        "points": [
+                            {"x": 0, "y": 0},
+                            {"x": 100, "y": 0},
+                            {"x": 100, "y": 100},
+                            {"x": 0, "y": 100},
+                        ],
+                    }
+                ],
+                "coordinate_size": 100,
+                "cup_radius": 50,
+            },
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("cup_size", response.get_json()["error"])
+
+    def test_gcode_endpoint_uses_machine_center_and_nozzle(self):
+        app.config["MACHINE_CONFIG"] = MachineConfig(
+            print_center_x_mm=10,
+            print_center_y_mm=20,
+            nozzle_mm=10,
+        )
+        client = app.test_client()
+
+        response = client.post(
+            "/api/gcode",
+            json={
+                "paths": [
+                    {
+                        "closed": True,
+                        "points": [
+                            {"x": 0, "y": 0},
+                            {"x": 100, "y": 0},
+                            {"x": 100, "y": 100},
+                            {"x": 0, "y": 100},
+                        ],
+                    }
+                ],
+                "coordinate_size": 100,
+                "cup_radius": 50,
+                "cup_size": "espresso",
+                "cup_scale": 0.5,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        self.assertEqual(payload["nozzle_mm"], 10)
+        self.assertIn("G0 X-1.250 Y10.000 F3000", payload["gcode"])
+        target = UPLOAD_DIR / payload["filename"]
+        self.assertTrue(target.exists())
+        target.unlink()
+
+    def test_save_recipe_validates_new_format(self):
+        client = app.test_client()
+        response = client.put(
+            "/api/recipes/test-api-recipe",
+            json={
+                "version": 3,
+                "name": "API Recipe",
+                "phases": {
+                    "before_printing": [
+                        {"type": "set", "outputs": {"pump": True, "flow_stop": True}},
+                    ],
+                    "while_printjob": [],
+                    "while_printing": [],
+                    "after_printjob": [],
+                },
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        self.assertEqual(payload["recipe"]["version"], 3)
+        self.assertTrue(self.recipe_path.exists())
+
+    def test_save_recipe_migrates_legacy_version_2_format(self):
+        client = app.test_client()
+        response = client.put(
+            "/api/recipes/test-api-recipe",
+            json={
+                "version": 2,
+                "name": "Legacy Recipe",
+                "steps": [{"time_ms": 0, "set": {"pump": True}}],
+                "loops": [],
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        self.assertEqual(payload["recipe"]["version"], 3)
+        self.assertEqual(payload["recipe"]["phases"]["before_printing"][0]["outputs"]["pump"], True)
+
+    def test_foam_endpoints_start_stop_and_state(self):
+        sequencer = FakeRelaySequencer()
+        app.config["RELAY_SEQUENCER"] = sequencer
+        client = app.test_client()
+
+        start = client.post("/api/foam/start", json={"recipe": "oatmilk"})
+        state = client.get("/api/foam/state")
+        stop = client.post("/api/foam/stop")
+
+        self.assertEqual(start.status_code, 202)
+        self.assertEqual(start.get_json()["status"], "started")
+        self.assertEqual(state.status_code, 200)
+        self.assertEqual(state.get_json()["status"], "running")
+        self.assertEqual(stop.status_code, 200)
+        self.assertTrue(sequencer.stopped)
+
+    def test_relays_endpoint_updates_partial_state(self):
+        sequencer = FakeRelaySequencer()
+        app.config["RELAY_SEQUENCER"] = sequencer
+        client = app.test_client()
+
+        response = client.post("/api/relays", json={"pump": True, "vacuum": True})
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        self.assertTrue(payload["relay_state"]["pump"])
+        self.assertTrue(payload["relay_state"]["vacuum"])
+
+    def test_relays_endpoint_rejects_removed_valve(self):
+        app.config["RELAY_SEQUENCER"] = RelaySequencer(FakeMarlin(), hardware=self.hardware)
+        client = app.test_client()
+
+        response = client.post("/api/relays", json={"valve": True})
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_case_led_endpoint_uses_marlin_p27(self):
+        marlin = FakeMarlin()
+        app.config["MARLIN"] = marlin
+        client = app.test_client()
+
+        with patch("app.save_machine_config", lambda config, path: None):
+            response = client.put("/api/case-led", json={"enabled": True})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("M42 P27 S255", marlin.commands)
+
+    def test_tank_endpoint_returns_state(self):
+        client = app.test_client()
+
+        response = client.post("/api/tank", json={"angle": 15})
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        self.assertEqual(payload["angle"], 15)
+        self.assertIn("tank", payload)
+
+    def test_motion_home_sends_g28(self):
+        marlin = FakeMarlin()
+        app.config["MARLIN"] = marlin
+        client = app.test_client()
+
+        response = client.post("/api/motion/home")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(marlin.commands, ["G28"])
+
+    def test_motion_jog_sends_relative_move_and_restores_absolute(self):
+        marlin = FakeMarlin()
+        app.config["MARLIN"] = marlin
+        client = app.test_client()
+
+        response = client.post("/api/motion/jog", json={"axis": "x", "distance_mm": -5})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(marlin.commands, ["G91", "G0 X-5.000 F1800", "G90"])
+
+    def test_socketio_connect_and_ping(self):
+        client = socketio.test_client(app)
+        self.assertTrue(client.is_connected())
+
+        received = client.get_received()
+        self.assertTrue(
+            any(
+                event["name"] == "server_status"
+                and event["args"][0]["status"] == "connected"
+                for event in received
+            )
+        )
+        self.assertTrue(any(event["name"] == "relay_update" for event in received))
+        self.assertTrue(any(event["name"] == "foam_status" for event in received))
+        self.assertTrue(any(event["name"] == "tank_status" for event in received))
+        self.assertTrue(any(event["name"] == "machine_config" for event in received))
+
+        client.emit("client_ping", {"timestamp": 123})
+        received = client.get_received()
+        self.assertTrue(
+            any(
+                event["name"] == "server_pong"
+                and event["args"][0]["status"] == "ok"
+                and event["args"][0]["timestamp"] == 123
+                for event in received
+            )
+        )
+
+        client.disconnect()
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -1,0 +1,7 @@
+﻿flask
+flask-socketio
+eventlet
+pyserial
+adafruit-circuitpython-vl53l0x
+rpi_ws281x
+

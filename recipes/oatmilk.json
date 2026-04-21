@@ -1,0 +1,55 @@
+{
+  "version": 2,
+  "name": "Oat Milk",
+  "steps": [
+    {
+      "time_ms": 0,
+      "set": {
+        "heater": true,
+        "pump": true
+      }
+    },
+    {
+      "time_ms": 1500,
+      "set": {
+        "vacuum": true
+      }
+    },
+    {
+      "time_ms": 4200,
+      "set": {
+        "pump": false,
+        "flow_stop": true
+      }
+    },
+    {
+      "time_ms": 6500,
+      "set": {
+        "heater": false,
+        "vacuum": false,
+        "flow_stop": false
+      }
+    }
+  ],
+  "loops": [
+    {
+      "start_ms": 1800,
+      "repeat": 3,
+      "period_ms": 900,
+      "steps": [
+        {
+          "offset_ms": 0,
+          "set": {
+            "flow_stop": true
+          }
+        },
+        {
+          "offset_ms": 300,
+          "set": {
+            "flow_stop": false
+          }
+        }
+      ]
+    }
+  ]
+}
