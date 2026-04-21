@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 \# Latte Art Machine – Technischer Projektplan
 
 
@@ -526,7 +525,3 @@ Die Case LED kann im Advanced Tab ueber zwei Buttons ein- und ausgeschaltet werd
 - `System off` => `P27` immer aus
 
 Nach dem erneuten Einschalten des System-Switches kehrt die Case LED auf den zuletzt im Web gesetzten Zustand zurueck.
-=======
-# Artista-Amara
-Latte Art 3D Printer Software and Interface
->>>>>>> cca30468434a43e3eb4513386f3156768138fcbf
