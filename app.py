@@ -1,6 +1,5 @@
-﻿import eventlet
-
-eventlet.monkey_patch()
+﻿#import eventlet
+#eventlet.monkey_patch()
 
 import json
 from pathlib import Path
@@ -34,7 +33,8 @@ CUP_SIZES_MM = {
 }
 
 app = Flask(__name__, static_folder="static", static_url_path="")
-socketio = SocketIO(app, cors_allowed_origins="*")
+#socketio = SocketIO(app, cors_allowed_origins="*")
+socketio = SocketIO(app, async_mode='threading', cors_allowed_origins="*")
 UPLOAD_DIR.mkdir(exist_ok=True)
 RECIPE_DIR.mkdir(exist_ok=True)
 

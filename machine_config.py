@@ -96,7 +96,7 @@ class MachineConfig:
     cup_present_threshold_mm: float = 90.0
     nozzle_mm: float = 4.0
     tof_i2c_address: int = 0x29
-    led_pin_bcm: int = 9
+    led_pin_bcm: int = 18 ##Board Pin 12
     serial_port: str = "/dev/serial0"
     baudrate: int = 115200
     command_timeout_s: float = 2.0
