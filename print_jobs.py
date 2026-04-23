@@ -55,11 +55,20 @@ class _PhaseRunner:
 
 
 class PrintJobManager:
-    def __init__(self, marlin, hardware, config=None, emit_event=None, sleep_interval_s=0.01):
+    def __init__(
+        self,
+        marlin,
+        hardware,
+        config=None,
+        emit_event=None,
+        on_job_complete=None,
+        sleep_interval_s=0.01,
+    ):
         self.marlin = marlin
         self.hardware = hardware
         self.config = config or MachineConfig()
         self.emit_event = emit_event or (lambda event, payload: None)
+        self.on_job_complete = on_job_complete or (lambda **kwargs: None)
         self.sleep_interval_s = float(sleep_interval_s)
         self._lock = threading.Lock()
         self._output_lock = threading.Lock()
@@ -74,11 +83,12 @@ class PrintJobManager:
         self._printing_runner = None
         self._printjob_stop_event = None
         self._printing_stop_event = None
+        self._moving_only = False
 
     def is_active(self):
         return self._thread is not None and self._thread.is_alive()
 
-    def start_print(self, gcode, recipe=None, recipe_name=None):
+    def start_print(self, gcode, recipe=None, recipe_name=None, moving_only=False):
         if hasattr(self.hardware, "get_system_enabled") and not self.hardware.get_system_enabled():
             raise ValueError("System switch is off")
 
@@ -95,9 +105,10 @@ class PrintJobManager:
             job_id = uuid.uuid4().hex
             self._abort_event.clear()
             self._active_job_id = job_id
+            self._moving_only = bool(moving_only)
             self._thread = threading.Thread(
                 target=self._run_job,
-                args=(job_id, lines, normalized_recipe, recipe_name),
+                args=(job_id, lines, normalized_recipe, recipe_name, bool(moving_only)),
                 daemon=True,
             )
             self._thread.start()
@@ -129,29 +140,31 @@ class PrintJobManager:
             thread.join(timeout)
         return thread is None or not thread.is_alive()
 
-    def _run_job(self, job_id, gcode, recipe, recipe_name):
+    def _run_job(self, job_id, gcode, recipe, recipe_name, moving_only):
         completed = False
         try:
             self._reset_recipe_runtime()
             self._safe_state()
-            self._run_recipe_phase_sync(recipe, "before_printing")
+            self._run_recipe_phase_sync(recipe, "before_printing", moving_only=moving_only)
             self._emit_progress(0, 0, len(gcode))
+            if moving_only:
+                self.emit_event("server_status", {"status": "moving_only", "message": "Moving Only mode active"})
             self._send_checked("G28")
             self._apply_tof_offset()
 
-            self._start_printjob_phase(recipe, recipe_name)
+            self._start_printjob_phase(recipe, recipe_name, moving_only=moving_only)
             for index, line in enumerate(gcode, start=1):
                 self._raise_if_aborted()
-                self._send_print_line(line, recipe, recipe_name)
+                self._send_print_line(line, recipe, recipe_name, moving_only=moving_only)
                 self._emit_progress(index, index, len(gcode))
 
             self._stop_printing_phase()
             self._stop_printjob_phase()
-            self._run_recipe_phase_sync(recipe, "after_printjob")
+            self._run_recipe_phase_sync(recipe, "after_printjob", moving_only=moving_only)
             completed = True
             self.emit_event(
                 "print_progress",
-                {"percent": 100, "line": len(gcode), "total": len(gcode)},
+                {"percent": 100, "line": len(gcode), "total": len(gcode), "moving_only": bool(moving_only)},
             )
         except Exception as exc:
             self._stop_parallel_phases()
@@ -160,12 +173,28 @@ class PrintJobManager:
         finally:
             self._stop_parallel_phases()
             self._safe_state(suppress_errors=not completed)
+            if completed:
+                try:
+                    self.on_job_complete(
+                        job_id=job_id,
+                        recipe=recipe,
+                        recipe_name=recipe_name,
+                        moving_only=bool(moving_only),
+                    )
+                except Exception as exc:
+                    self.emit_event(
+                        "warning",
+                        {"msg": f"Post-print callback failed: {exc}", "level": "warning"},
+                    )
             with self._lock:
                 if self._active_job_id == job_id:
                     self._active_job_id = None
+                    self._moving_only = False
 
-    def _run_recipe_phase_sync(self, recipe, phase):
+    def _run_recipe_phase_sync(self, recipe, phase, moving_only=False):
         if not recipe:
+            return
+        if moving_only:
             return
 
         _normalized, timeline, _duration_ms = compile_recipe_phase(recipe, phase)
@@ -186,8 +215,10 @@ class PrintJobManager:
                 return
             time.sleep(self.sleep_interval_s)
 
-    def _start_printjob_phase(self, recipe, recipe_name):
+    def _start_printjob_phase(self, recipe, recipe_name, moving_only=False):
         if not recipe:
+            return
+        if moving_only:
             return
         _normalized, timeline, _duration_ms = compile_recipe_phase(recipe, "while_printjob")
         if not timeline:
@@ -212,7 +243,7 @@ class PrintJobManager:
             self._printjob_vacuum = None
             self._apply_vacuum_owner_locked()
 
-    def _start_printing_phase(self, recipe, recipe_name):
+    def _start_printing_phase(self, recipe, recipe_name, moving_only=False):
         self._stop_printing_phase()
         with self._output_lock:
             self._printing_window_active = True
@@ -220,6 +251,8 @@ class PrintJobManager:
             self._apply_vacuum_owner_locked()
 
         if not recipe:
+            return
+        if moving_only:
             return
         _normalized, timeline, _duration_ms = compile_recipe_phase(recipe, "while_printing")
         if not timeline:
@@ -339,12 +372,33 @@ class PrintJobManager:
         )
         self._send_checked(f"G92 Z{z_value:.3f}")
 
-    def _send_print_line(self, line, recipe, recipe_name):
+    def _send_print_line(self, line, recipe, recipe_name, moving_only=False):
+        if moving_only:
+            if self.config.is_pump_command(line, True):
+                self._mark_output_state("pump", False)
+                self._mark_output_state("flow_stop", False)
+                return
+            if self.config.is_pump_command(line, False):
+                self._mark_output_state("pump", False)
+                self._mark_output_state("flow_stop", True)
+                return
+            if line.upper() in {
+                self.config.pin_command("heater", True).upper(),
+                self.config.pin_command("heater", False).upper(),
+                self.config.pin_command("flow_stop", True).upper(),
+                self.config.pin_command("flow_stop", False).upper(),
+                self.config.pin_command("case_led", True).upper(),
+                self.config.pin_command("case_led", False).upper(),
+            }:
+                return
+            self._send_checked(line)
+            return
+
         if self.config.is_pump_command(line, True):
             self._set_stop(False)
             self._send_checked(line)
             self._mark_output_state("pump", True)
-            self._start_printing_phase(recipe, recipe_name)
+            self._start_printing_phase(recipe, recipe_name, moving_only=moving_only)
             return
 
         if self.config.is_pump_command(line, False):
@@ -409,7 +463,7 @@ class PrintJobManager:
         percent = 100 if total == 0 else round((completed / total) * 100, 1)
         self.emit_event(
             "print_progress",
-            {"percent": percent, "line": line, "total": total},
+            {"percent": percent, "line": line, "total": total, "moving_only": bool(self._moving_only)},
         )
 
     def _raise_if_aborted(self):

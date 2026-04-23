@@ -947,6 +947,34 @@
       line-height: 1.45;
     }
 
+    .cleaning-modal[hidden] {
+      display: none;
+    }
+
+    .cleaning-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: grid;
+      place-items: center;
+      padding: 1rem;
+      background: rgba(23, 11, 9, 0.54);
+      backdrop-filter: blur(10px);
+    }
+
+    .cleaning-modal-card {
+      width: min(28rem, 100%);
+      padding: 1.1rem;
+      border-radius: var(--radius);
+      background: rgba(255, 250, 245, 0.96);
+      color: var(--primary);
+      box-shadow: 0 1rem 2.2rem rgba(39, 19, 16, 0.2);
+    }
+
+    .cleaning-modal-card h3 {
+      margin-bottom: 0.5rem;
+    }
+
     .machine-status .progress-meter {
       flex: 1 0 100%;
       margin-top: 0.35rem;
@@ -1637,6 +1665,24 @@
           <strong id="modeState">Waiting</strong>
         </div>
       </div>
+      <div class="hero-stats">
+        <div class="meta-card">
+          <span>Prints</span>
+          <strong id="totalPrintsValue">0</strong>
+        </div>
+        <div class="meta-card">
+          <span>Cleanings</span>
+          <strong id="totalCleaningsValue">0</strong>
+        </div>
+        <div class="meta-card">
+          <span>Since Clean</span>
+          <strong id="printsSinceCleaningValue">0</strong>
+        </div>
+        <div class="meta-card">
+          <span>Last Cleaned</span>
+          <strong id="lastCleanedValue">Never</strong>
+        </div>
+      </div>
       <div class="control-grid">
         <div class="control-row">
           <label class="control">
@@ -1835,6 +1881,46 @@
           </div>
         </div>
         <div class="advanced-card">
+          <strong>Cleaning</strong>
+          <p class="helper-text">Neue grosse Tasse drunter stellen. Tank mit Wasser, idealerweise mit Artista Amara Zitronenreiniger, fuellen. Dann auf Run klicken.</p>
+          <div class="telemetry-grid">
+            <div class="telemetry-tile">
+              <span>Last Cleaned</span>
+              <strong id="cleaningLastValue">Never</strong>
+            </div>
+            <div class="telemetry-tile">
+              <span>Prints Since</span>
+              <strong id="cleaningPrintsSinceValue">0</strong>
+            </div>
+            <div class="telemetry-tile">
+              <span>Cleaning Mode</span>
+              <strong id="cleaningModeValue">Locked</strong>
+            </div>
+            <div class="telemetry-tile">
+              <span>Status</span>
+              <strong id="cleaningStatusValue">Idle</strong>
+            </div>
+          </div>
+          <div class="advanced-actions">
+            <button id="runCleaningButton" class="advanced-button primary" type="button">Run Cleaning</button>
+            <button id="stopCleaningButton" class="advanced-button" type="button">Stop Cleaning</button>
+          </div>
+          <div class="recipe-output-grid">
+            <div class="recipe-output">
+              <label><input id="cleaningPumpToggle" type="checkbox"> Pump</label>
+            </div>
+            <div class="recipe-output">
+              <label><input id="cleaningHeaterToggle" type="checkbox"> Heater</label>
+            </div>
+            <div class="recipe-output">
+              <label><input id="cleaningFlowStopToggle" type="checkbox"> Flow Stop</label>
+            </div>
+            <div class="recipe-output">
+              <label><input id="cleaningVacuumToggle" type="checkbox"> Vacuum Valve</label>
+            </div>
+          </div>
+        </div>
+        <div class="advanced-card">
           <strong>Motion <button class="touch-info" type="button" data-info="Moves axes manually for setup and service. Use only while idle." aria-label="Explain motion">i</button></strong>
           <label class="mode-field">
             <span class="mode-label">Jog Step mm</span>
@@ -1855,6 +1941,13 @@
             <span></span>
             <button class="advanced-button" type="button" data-jog-axis="Z" data-jog-direction="-1">Z-</button>
             <span></span>
+          </div>
+        </div>
+        <div class="advanced-card">
+          <strong>Print Mode</strong>
+          <p id="movingOnlyHint" class="helper-text">Normal print mode. Pump, relays, and recipe phases run as configured.</p>
+          <div class="advanced-actions">
+            <button id="movingOnlyToggleButton" class="advanced-button" type="button">Moving Only Off</button>
           </div>
         </div>
         <div class="advanced-card">
@@ -1911,6 +2004,17 @@
         </div>
       </div>
     </section>
+    <div id="cleaningModal" class="cleaning-modal" hidden>
+      <div class="cleaning-modal-card">
+        <p class="section-kicker">Cleaning Required</p>
+        <h3>Please run a cleaning.</h3>
+        <p>Place a large cup underneath, fill the tank with water and cleaner, then start Cleaning.</p>
+        <div class="advanced-actions">
+          <button id="cleaningModalYesButton" class="advanced-button primary" type="button">Yes</button>
+          <button id="cleaningModalLaterButton" class="advanced-button" type="button">Later</button>
+        </div>
+      </div>
+    </div>
     <div id="touchInfoPopover" class="touch-info-popover" hidden role="status" aria-live="polite"></div>
   </main>
   <script src="socket.io.min.js"></script>
@@ -1948,6 +2052,10 @@
     const activePreviewLabel = document.getElementById("activePreviewLabel");
     const machineCanvasToggle = document.getElementById("machineCanvasToggle");
     const printButton = document.getElementById("printButton");
+    const totalPrintsValue = document.getElementById("totalPrintsValue");
+    const totalCleaningsValue = document.getElementById("totalCleaningsValue");
+    const printsSinceCleaningValue = document.getElementById("printsSinceCleaningValue");
+    const lastCleanedValue = document.getElementById("lastCleanedValue");
     const studioPanel = document.getElementById("studioPanel");
     const previewShell = document.getElementById("previewShell");
     const actionShell = document.getElementById("actionShell");
@@ -1960,6 +2068,19 @@
     const recipeBuilder = document.getElementById("recipeBuilder");
     const reloadRecipesButton = document.getElementById("reloadRecipesButton");
     const saveRecipeButton = document.getElementById("saveRecipeButton");
+    const runCleaningButton = document.getElementById("runCleaningButton");
+    const stopCleaningButton = document.getElementById("stopCleaningButton");
+    const cleaningPumpToggle = document.getElementById("cleaningPumpToggle");
+    const cleaningHeaterToggle = document.getElementById("cleaningHeaterToggle");
+    const cleaningFlowStopToggle = document.getElementById("cleaningFlowStopToggle");
+    const cleaningVacuumToggle = document.getElementById("cleaningVacuumToggle");
+    const cleaningLastValue = document.getElementById("cleaningLastValue");
+    const cleaningPrintsSinceValue = document.getElementById("cleaningPrintsSinceValue");
+    const cleaningModeValue = document.getElementById("cleaningModeValue");
+    const cleaningStatusValue = document.getElementById("cleaningStatusValue");
+    const cleaningModal = document.getElementById("cleaningModal");
+    const cleaningModalYesButton = document.getElementById("cleaningModalYesButton");
+    const cleaningModalLaterButton = document.getElementById("cleaningModalLaterButton");
     const tofReadButton = document.getElementById("tofReadButton");
     const printCenterX = document.getElementById("printCenterX");
     const printCenterY = document.getElementById("printCenterY");
@@ -1987,6 +2108,8 @@
     const caseLedPhysicalValue = document.getElementById("caseLedPhysicalValue");
     const caseLedHint = document.getElementById("caseLedHint");
     const caseLedToggleButton = document.getElementById("caseLedToggleButton");
+    const movingOnlyHint = document.getElementById("movingOnlyHint");
+    const movingOnlyToggleButton = document.getElementById("movingOnlyToggleButton");
     const debugIssuesList = document.getElementById("debugIssuesList");
     const debugGuards = document.getElementById("debugGuards");
     const debugInputsList = document.getElementById("debugInputsList");
@@ -2104,6 +2227,27 @@
       debugGuards: null,
       debugIssuesRemote: [],
       uartResponses: [],
+      movingOnly: false,
+      usageStats: {
+        last_cleaned_at: null,
+        last_printed_at: null,
+        prints_since_cleaning: 0,
+        total_prints: 0,
+        total_cleanings: 0,
+        can_defer_cleaning: true,
+        requires_cleaning: false
+      },
+      cleaningState: {
+        active: false,
+        running: false,
+        outputs: {
+          pump: false,
+          heater: false,
+          flow_stop: false,
+          vacuum: false
+        }
+      },
+      cleaningPromptVisible: false,
       hardwareState: {
         system_enabled: true,
         quick_buttons: {},
@@ -2121,6 +2265,74 @@
         modeState.textContent = mode;
       }
       updateReadouts();
+    }
+
+    function formatTimestamp(value) {
+      if (!value) {
+        return "Never";
+      }
+      const parsed = new Date(value);
+      if (Number.isNaN(parsed.getTime())) {
+        return "Never";
+      }
+      return parsed.toLocaleString();
+    }
+
+    function applyUsageStats(payload) {
+      if (!payload) {
+        return;
+      }
+      state.usageStats = {
+        ...state.usageStats,
+        ...payload
+      };
+      totalPrintsValue.textContent = String(state.usageStats.total_prints || 0);
+      totalCleaningsValue.textContent = String(state.usageStats.total_cleanings || 0);
+      printsSinceCleaningValue.textContent = String(state.usageStats.prints_since_cleaning || 0);
+      lastCleanedValue.textContent = formatTimestamp(state.usageStats.last_cleaned_at);
+      cleaningLastValue.textContent = formatTimestamp(state.usageStats.last_cleaned_at);
+      cleaningPrintsSinceValue.textContent = String(state.usageStats.prints_since_cleaning || 0);
+      cleaningModalLaterButton.disabled = !state.usageStats.can_defer_cleaning;
+      updateReadouts();
+    }
+
+    function applyCleaningState(payload) {
+      if (!payload) {
+        return;
+      }
+      state.cleaningState = {
+        ...state.cleaningState,
+        ...payload,
+        outputs: {
+          ...state.cleaningState.outputs,
+          ...(payload.outputs || {})
+        }
+      };
+      cleaningPumpToggle.checked = !!state.cleaningState.outputs.pump;
+      cleaningHeaterToggle.checked = !!state.cleaningState.outputs.heater;
+      cleaningFlowStopToggle.checked = !!state.cleaningState.outputs.flow_stop;
+      cleaningVacuumToggle.checked = !!state.cleaningState.outputs.vacuum;
+      cleaningModeValue.textContent = state.cleaningState.active ? "Unlocked" : "Locked";
+      cleaningStatusValue.textContent = state.cleaningState.running ? "Preparing" : state.cleaningState.active ? "Ready" : "Idle";
+      const togglesDisabled = !state.cleaningState.active || state.cleaningState.running;
+      cleaningPumpToggle.disabled = togglesDisabled;
+      cleaningHeaterToggle.disabled = togglesDisabled;
+      cleaningFlowStopToggle.disabled = togglesDisabled;
+      cleaningVacuumToggle.disabled = togglesDisabled;
+      stopCleaningButton.disabled = !state.cleaningState.active;
+      runCleaningButton.disabled = state.cleaningState.running || state.printing;
+      updateReadouts();
+    }
+
+    function showCleaningPrompt() {
+      state.cleaningPromptVisible = true;
+      cleaningModal.hidden = false;
+      cleaningModalLaterButton.disabled = !state.usageStats.can_defer_cleaning;
+    }
+
+    function hideCleaningPrompt() {
+      state.cleaningPromptVisible = false;
+      cleaningModal.hidden = true;
     }
 
     function setBackendStatus(status, message) {
@@ -2409,6 +2621,31 @@
         updatePrintProgress(payload || {});
       });
 
+      socket.on("usage_stats", (payload) => {
+        applyUsageStats(payload);
+      });
+
+      socket.on("cleaning_state", (payload) => {
+        applyCleaningState(payload);
+      });
+
+      socket.on("print_complete", (payload) => {
+        if (payload && payload.stats) {
+          applyUsageStats(payload.stats);
+        }
+        showCleaningPrompt();
+        setStatus("Print finished. Please run a cleaning.", "Ready");
+      });
+
+      socket.on("cleaning_complete", (payload) => {
+        if (payload && payload.stats) {
+          applyUsageStats(payload.stats);
+        }
+        hideCleaningPrompt();
+        applyCleaningState({ active: true, running: false });
+        setStatus("Cleaning position reached. Manual cleaning controls are unlocked.", "Cleaning");
+      });
+
       socket.on("marlin_status", (payload) => {
         if (payload && payload.msg) {
           state.marlinMessage = payload.msg;
@@ -2685,7 +2922,7 @@
       invertButton.textContent = state.invert ? "Normal" : "Invert";
       invertActionLabel.textContent = state.invert ? "Normal" : "Invert";
       rasterToggleButton.textContent = state.showRaster ? "Hide Grid" : "Show Grid";
-      printButton.disabled = !state.printing && (!selectedCup || state.paths.length === 0 || state.outOfBounds || state.backendStatus !== "connected" || state.blockingWarning || !state.hardwareState.system_enabled || (state.tankState && (state.tankState.fault || !state.tankState.present)));
+      printButton.disabled = !state.printing && (!selectedCup || state.paths.length === 0 || state.outOfBounds || state.backendStatus !== "connected" || state.blockingWarning || !state.hardwareState.system_enabled || (state.tankState && (state.tankState.fault || !state.tankState.present)) || state.cleaningState.running);
       machineCanvasStage.hidden = !state.showMachineCanvas;
       cupPreviewStage.hidden = state.showMachineCanvas;
       activePreviewLabel.textContent = state.showMachineCanvas ? "Machine Canvas" : "Cup Preview";
@@ -2694,6 +2931,11 @@
       machineCanvasToggle.title = state.showMachineCanvas ? "Cup Preview" : "Machine Canvas";
       machineCanvasToggle.disabled = false;
       previewNote.hidden = state.paths.length > 0;
+      movingOnlyToggleButton.classList.toggle("primary", state.movingOnly);
+      movingOnlyToggleButton.textContent = state.movingOnly ? "Moving Only On" : "Moving Only Off";
+      movingOnlyHint.textContent = state.movingOnly
+        ? "Moving Only is active. Prints will home and move, but pump, relays, vacuum, and recipe phases stay off."
+        : "Normal print mode. Pump, relays, and recipe phases run as configured.";
       modeState.textContent = state.processing
         ? "Vectorizing"
         : state.outOfBounds
@@ -2708,6 +2950,7 @@
       renderWarningBanners();
       renderDebugPanel();
       updateMachineStatus();
+      runCleaningButton.disabled = state.printing || state.cleaningState.running || state.backendStatus !== "connected" || !state.hardwareState.system_enabled;
     }
 
     function updateMachineStatus() {
@@ -3228,7 +3471,7 @@
 
         setStatus("G-code generated: " + (gcodePayload.line_count || 0) + " lines. Starting print job.", "Starting");
 
-        const startPayload = { gcode: gcodePayload.gcode };
+        const startPayload = { gcode: gcodePayload.gcode, moving_only: state.movingOnly };
         if (state.activeRecipe) {
           startPayload.recipe = state.activeRecipe;
         }
@@ -3244,7 +3487,12 @@
           throw new Error(payload.error || "Print job could not be started.");
         }
 
-        setStatus("Print job started. Waiting for Marlin progress.", "Printing");
+        setStatus(
+          state.movingOnly
+            ? "Moving Only print started. Motion commands are running without pump or relay actions."
+            : "Print job started. Waiting for Marlin progress.",
+          "Printing"
+        );
       } catch (error) {
         stopPrinting(false);
         setStatus(error.message || "Print job could not be started.", "Error");
@@ -3796,6 +4044,82 @@
         return payload;
       } catch (error) {
         setWarning(error.message || "Machine Config could not be loaded.", "warning");
+      }
+    }
+
+    async function loadUsageStats() {
+      try {
+        const response = await fetch("/api/usage-stats");
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload.error || "Usage stats could not be loaded.");
+        }
+        applyUsageStats(payload);
+        return payload;
+      } catch (error) {
+        setWarning(error.message || "Usage stats could not be loaded.", "warning");
+      }
+    }
+
+    async function loadCleaningState() {
+      try {
+        const response = await fetch("/api/cleaning/state");
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload.error || "Cleaning state could not be loaded.");
+        }
+        applyCleaningState(payload);
+        return payload;
+      } catch (error) {
+        setWarning(error.message || "Cleaning state could not be loaded.", "warning");
+      }
+    }
+
+    async function runCleaning() {
+      try {
+        const response = await fetch("/api/cleaning/start", { method: "POST" });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload.error || "Cleaning could not be started.");
+        }
+        hideCleaningPrompt();
+        applyCleaningState({ active: false, running: true });
+        setStatus("Cleaning run started. Machine is moving into service position.", "Cleaning");
+      } catch (error) {
+        setWarning(error.message || "Cleaning could not be started.", "warning");
+      }
+    }
+
+    async function stopCleaningMode() {
+      try {
+        const response = await fetch("/api/cleaning/stop", { method: "POST" });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload.error || "Cleaning mode could not be stopped.");
+        }
+        applyCleaningState(payload.cleaning || { active: false, running: false });
+        setStatus("Cleaning mode stopped.", "Ready");
+      } catch (error) {
+        setWarning(error.message || "Cleaning mode could not be stopped.", "warning");
+      }
+    }
+
+    async function setCleaningOutput(name, enabled) {
+      try {
+        const response = await fetch("/api/cleaning/output", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, enabled })
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload.error || "Cleaning output could not be changed.");
+        }
+        applyCleaningState(payload);
+        setStatus(name + " set to " + (enabled ? "on" : "off") + ".", "Cleaning");
+      } catch (error) {
+        setWarning(error.message || "Cleaning output could not be changed.", "warning");
+        await loadCleaningState();
       }
     }
 
@@ -4406,6 +4730,14 @@
     recipeBuilder.addEventListener("change", handleRecipeBuilderChange);
     reloadRecipesButton.addEventListener("click", loadRecipeList);
     saveRecipeButton.addEventListener("click", saveRecipe);
+    runCleaningButton.addEventListener("click", runCleaning);
+    stopCleaningButton.addEventListener("click", stopCleaningMode);
+    cleaningPumpToggle.addEventListener("change", () => setCleaningOutput("pump", cleaningPumpToggle.checked));
+    cleaningHeaterToggle.addEventListener("change", () => setCleaningOutput("heater", cleaningHeaterToggle.checked));
+    cleaningFlowStopToggle.addEventListener("change", () => setCleaningOutput("flow_stop", cleaningFlowStopToggle.checked));
+    cleaningVacuumToggle.addEventListener("change", () => setCleaningOutput("vacuum", cleaningVacuumToggle.checked));
+    cleaningModalYesButton.addEventListener("click", runCleaning);
+    cleaningModalLaterButton.addEventListener("click", hideCleaningPrompt);
     reloadMachineConfigButton.addEventListener("click", loadMachineConfig);
     saveMachineConfigButton.addEventListener("click", saveMachineConfig);
     debugUartTestButton.addEventListener("click", runDebugUartTest);
@@ -4430,6 +4762,10 @@
     });
     tankOpenButton.addEventListener("click", () => moveTank(90, "Open"));
     tankCloseButton.addEventListener("click", () => moveTank(0, "Closed"));
+    movingOnlyToggleButton.addEventListener("click", () => {
+      state.movingOnly = !state.movingOnly;
+      updateReadouts();
+    });
     caseLedToggleButton.addEventListener("click", () => setCaseLed(!state.hardwareState.case_led_enabled));
     closeAdvancedButton.addEventListener("click", () => {
       state.advancedOpen = false;
@@ -4451,6 +4787,8 @@
 
     initSocketConnection();
     loadPresets();
+    loadUsageStats();
+    loadCleaningState();
     applyCupScale();
     drawMachineCanvas();
     renderCupPreview();

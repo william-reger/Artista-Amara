@@ -1,10 +1,12 @@
-﻿import unittest
+import tempfile
+import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from app import RECIPE_DIR, UPLOAD_DIR, app, socketio
+from app import CleaningSession, RECIPE_DIR, UPLOAD_DIR, app, handle_print_job_complete, socketio
 from machine_config import MachineConfig
 from relay_sequencer import RelaySequencer
+from usage_stats import UsageStatsStore
 
 
 class FakePrintManager:
@@ -12,13 +14,15 @@ class FakePrintManager:
         self.started_gcode = None
         self.started_recipe = None
         self.started_recipe_name = None
+        self.started_moving_only = False
         self.aborted = False
         self.active = False
 
-    def start_print(self, gcode, recipe=None, recipe_name=None):
+    def start_print(self, gcode, recipe=None, recipe_name=None, moving_only=False):
         self.started_gcode = gcode
         self.started_recipe = recipe
         self.started_recipe_name = recipe_name
+        self.started_moving_only = bool(moving_only)
         self.active = True
         return "job-1"
 
@@ -67,6 +71,9 @@ class FakeMarlin:
             "responses": list(responses or []),
             "error": error,
         }
+
+    def clear_queue(self):
+        return None
 
 
 class FakeRelaySequencer:
@@ -208,19 +215,25 @@ class FakeHardware:
 
 class AppSocketIOTest(unittest.TestCase):
     def setUp(self):
+        self.temp_dir = tempfile.TemporaryDirectory()
         self.recipe_path = RECIPE_DIR / "test-api-recipe.json"
         self.hardware = FakeHardware(tank_present=True)
         app.config["HARDWARE"] = self.hardware
         app.config["PRINT_MANAGER"] = FakePrintManager()
         app.config["RELAY_SEQUENCER"] = FakeRelaySequencer()
         app.config["MARLIN"] = FakeMarlin()
+        app.config["USAGE_STATS"] = UsageStatsStore(Path(self.temp_dir.name) / "usage_stats.json")
+        app.config["CLEANING_SESSION"] = CleaningSession()
 
     def tearDown(self):
+        self.temp_dir.cleanup()
         app.config.pop("PRINT_MANAGER", None)
         app.config.pop("RELAY_SEQUENCER", None)
         app.config.pop("HARDWARE", None)
         app.config.pop("MARLIN", None)
         app.config.pop("MACHINE_CONFIG", None)
+        app.config.pop("USAGE_STATS", None)
+        app.config.pop("CLEANING_SESSION", None)
         if self.recipe_path.exists():
             self.recipe_path.unlink()
 
@@ -252,6 +265,7 @@ class AppSocketIOTest(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertIn("recipes", response.get_json())
+        self.assertIn("Cleaning", response.get_json()["recipes"])
 
     def test_presets_endpoint_lists_svg_files(self):
         client = app.test_client()
@@ -263,6 +277,18 @@ class AppSocketIOTest(unittest.TestCase):
         self.assertIn("presets", payload)
         self.assertTrue(any(preset["file"].endswith(".svg") for preset in payload["presets"]))
 
+    def test_usage_stats_endpoint_returns_defaults(self):
+        client = app.test_client()
+
+        response = client.get("/api/usage-stats")
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        self.assertEqual(payload["prints_since_cleaning"], 0)
+        self.assertEqual(payload["total_prints"], 0)
+        self.assertEqual(payload["total_cleanings"], 0)
+        self.assertTrue(payload["can_defer_cleaning"])
+
     def test_start_print_endpoint_starts_manager(self):
         manager = FakePrintManager()
         app.config["PRINT_MANAGER"] = manager
@@ -271,7 +297,7 @@ class AppSocketIOTest(unittest.TestCase):
         response = client.post("/api/start-print", json={"gcode": ["G21", "M400"]})
 
         self.assertEqual(response.status_code, 202)
-        self.assertEqual(response.get_json(), {"job_id": "job-1", "status": "started"})
+        self.assertEqual(response.get_json(), {"job_id": "job-1", "status": "started", "moving_only": False})
         self.assertEqual(manager.started_gcode, ["G21", "M400"])
 
     def test_start_print_endpoint_passes_recipe_name_to_manager(self):
@@ -284,6 +310,17 @@ class AppSocketIOTest(unittest.TestCase):
         self.assertEqual(response.status_code, 202)
         self.assertEqual(manager.started_recipe_name, "oatmilk")
         self.assertEqual(manager.started_recipe["version"], 3)
+
+    def test_start_print_endpoint_passes_moving_only_to_manager(self):
+        manager = FakePrintManager()
+        app.config["PRINT_MANAGER"] = manager
+        client = app.test_client()
+
+        response = client.post("/api/start-print", json={"gcode": ["G21"], "moving_only": True})
+
+        self.assertEqual(response.status_code, 202)
+        self.assertTrue(manager.started_moving_only)
+        self.assertTrue(response.get_json()["moving_only"])
 
     def test_start_print_rejects_missing_tank(self):
         app.config["HARDWARE"] = FakeHardware(tank_present=False)
@@ -457,6 +494,55 @@ class AppSocketIOTest(unittest.TestCase):
         self.assertEqual(stop.status_code, 200)
         self.assertTrue(sequencer.stopped)
 
+    def test_cleaning_start_endpoint_starts_manager_in_moving_only_mode(self):
+        manager = FakePrintManager()
+        app.config["PRINT_MANAGER"] = manager
+        client = app.test_client()
+
+        response = client.post("/api/cleaning/start")
+
+        self.assertEqual(response.status_code, 202)
+        self.assertEqual(response.get_json()["recipe"], "Cleaning")
+        self.assertTrue(manager.started_moving_only)
+        self.assertEqual(manager.started_recipe_name, "Cleaning")
+        self.assertEqual(manager.started_gcode, ["G0 X100.000 Y100.000 F1800", "G0 Z0.000 F300"])
+
+    def test_cleaning_output_requires_active_cleaning_mode(self):
+        client = app.test_client()
+
+        response = client.post("/api/cleaning/output", json={"name": "pump", "enabled": True})
+
+        self.assertEqual(response.status_code, 409)
+        self.assertIn("Cleaning mode is not active", response.get_json()["error"])
+
+    def test_cleaning_output_updates_pump_when_active(self):
+        app.config["CLEANING_SESSION"].activate()
+        marlin = FakeMarlin()
+        app.config["MARLIN"] = marlin
+        client = app.test_client()
+
+        response = client.post("/api/cleaning/output", json={"name": "pump", "enabled": True})
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        self.assertTrue(payload["outputs"]["pump"])
+        self.assertIn("M42 P29 S255", marlin.commands)
+
+    def test_cleaning_stop_turns_outputs_off(self):
+        session = app.config["CLEANING_SESSION"]
+        session.activate()
+        session.set_output("pump", True)
+        marlin = FakeMarlin()
+        app.config["MARLIN"] = marlin
+        client = app.test_client()
+
+        response = client.post("/api/cleaning/stop")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.get_json()["cleaning"]["active"])
+        self.assertIn("M42 P29 S0", marlin.commands)
+        self.assertIn("M42 P28 S255", marlin.commands)
+
     def test_relays_endpoint_updates_partial_state(self):
         sequencer = FakeRelaySequencer()
         app.config["RELAY_SEQUENCER"] = sequencer
@@ -535,6 +621,8 @@ class AppSocketIOTest(unittest.TestCase):
         self.assertIn("issues", payload)
         self.assertIn("inputs", payload["hardware"])
         self.assertIn("outputs", payload["hardware"])
+        self.assertIn("cleaning_state", payload)
+        self.assertIn("usage_stats", payload)
 
     def test_debug_uart_command_runs_manual_command(self):
         marlin = FakeMarlin()
@@ -594,6 +682,23 @@ class AppSocketIOTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("M42 P29 S255", marlin.commands)
 
+    def test_handle_print_job_complete_increments_print_stats(self):
+        handle_print_job_complete(job_id="job-1", recipe=None, recipe_name=None, moving_only=False)
+
+        stats = app.config["USAGE_STATS"].load()
+        self.assertEqual(stats["total_prints"], 1)
+        self.assertEqual(stats["prints_since_cleaning"], 1)
+        self.assertIsNotNone(stats["last_printed_at"])
+
+    def test_handle_print_job_complete_marks_cleaning_success(self):
+        handle_print_job_complete(job_id="job-2", recipe=None, recipe_name="Cleaning", moving_only=True)
+
+        stats = app.config["USAGE_STATS"].load()
+        self.assertEqual(stats["total_cleanings"], 1)
+        self.assertEqual(stats["prints_since_cleaning"], 0)
+        self.assertIsNotNone(stats["last_cleaned_at"])
+        self.assertTrue(app.config["CLEANING_SESSION"].is_active())
+
     def test_socketio_connect_and_ping(self):
         client = socketio.test_client(app)
         self.assertTrue(client.is_connected())
@@ -610,6 +715,8 @@ class AppSocketIOTest(unittest.TestCase):
         self.assertTrue(any(event["name"] == "foam_status" for event in received))
         self.assertTrue(any(event["name"] == "tank_status" for event in received))
         self.assertTrue(any(event["name"] == "machine_config" for event in received))
+        self.assertTrue(any(event["name"] == "usage_stats" for event in received))
+        self.assertTrue(any(event["name"] == "cleaning_state" for event in received))
         self.assertTrue(any(event["name"] == "debug_snapshot" for event in received))
 
         client.emit("client_ping", {"timestamp": 123})

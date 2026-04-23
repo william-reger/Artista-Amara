@@ -214,6 +214,47 @@ class PrintJobManagerTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             manager.start_print(["G28"])
 
+    def test_moving_only_skips_pump_commands_and_recipe_phases(self):
+        marlin = FakeMarlin()
+        hardware = FakeHardware()
+        events = []
+        recipe = {
+            "version": 3,
+            "name": "DryRun",
+            "phases": {
+                "before_printing": [
+                    {"type": "set", "outputs": {"heater": True}},
+                ],
+                "while_printjob": [
+                    {"type": "set", "outputs": {"vacuum": True}},
+                ],
+                "while_printing": [
+                    {"type": "set", "outputs": {"vacuum": True}},
+                ],
+                "after_printjob": [
+                    {"type": "set", "outputs": {"pump": True}},
+                ],
+            },
+        }
+        manager = PrintJobManager(
+            marlin,
+            hardware,
+            emit_event=lambda event, payload: events.append((event, payload)),
+            sleep_interval_s=0.001,
+        )
+
+        manager.start_print(["M42 P29 S255", "G1 X1 Y2", "M42 P29 S0"], recipe=recipe, moving_only=True)
+        self.assertTrue(manager.wait_for_idle(2))
+
+        self.assertIn("G28", marlin.commands)
+        self.assertIn("G1 X1 Y2", marlin.commands)
+        self.assertNotIn("M42 P29 S255", marlin.commands)
+        self.assertEqual(marlin.commands.count("M42 P29 S0"), 2)
+        self.assertNotIn("M42 P30 S255", marlin.commands)
+        self.assertNotIn(("vacuum_relay", True), hardware.output_events)
+        self.assertFalse(any(event == "recipe_phase" for event, _payload in events))
+        self.assertIn(("server_status", {"status": "moving_only", "message": "Moving Only mode active"}), events)
+
 
 if __name__ == "__main__":
     unittest.main()

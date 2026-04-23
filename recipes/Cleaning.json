@@ -1,0 +1,10 @@
+{
+  "version": 3,
+  "name": "Cleaning",
+  "phases": {
+    "before_printing": [],
+    "while_printjob": [],
+    "while_printing": [],
+    "after_printjob": []
+  }
+}

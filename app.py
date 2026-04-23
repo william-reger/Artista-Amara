@@ -2,6 +2,7 @@
 #eventlet.monkey_patch()
 
 import json
+import threading
 from pathlib import Path
 from uuid import uuid4
 
@@ -19,12 +20,14 @@ from relay_sequencer import (
     RelaySequencerBusyError,
     validate_recipe,
 )
+from usage_stats import UsageStatsStore
 
 
 BASE_DIR = Path(__file__).resolve().parent
 UPLOAD_DIR = BASE_DIR / "uploads"
 RECIPE_DIR = BASE_DIR / "recipes"
 SETTINGS_PATH = BASE_DIR / "machine_settings.json"
+STATS_PATH = BASE_DIR / "usage_stats.json"
 PRESET_DIR = BASE_DIR / "static" / "presets"
 CUP_SIZES_MM = {
     "espresso": 45.0,
@@ -41,8 +44,172 @@ RECIPE_DIR.mkdir(exist_ok=True)
 machine_config = load_machine_config(SETTINGS_PATH)
 
 
+DEFAULT_CLEANING_RECIPE = {
+    "version": 3,
+    "name": "Cleaning",
+    "phases": {
+        "before_printing": [],
+        "while_printjob": [],
+        "while_printing": [],
+        "after_printjob": [],
+    },
+}
+
+
+class CleaningSession:
+    def __init__(self):
+        self._lock = threading.Lock()
+        self._state = {
+            "active": False,
+            "running": False,
+            "outputs": {
+                "pump": False,
+                "heater": False,
+                "flow_stop": False,
+                "vacuum": False,
+            },
+        }
+
+    def get_state(self):
+        with self._lock:
+            return self._snapshot_locked()
+
+    def _snapshot_locked(self):
+        return {
+            "active": bool(self._state["active"]),
+            "running": bool(self._state["running"]),
+            "outputs": dict(self._state["outputs"]),
+        }
+
+    def set_running(self, running):
+        with self._lock:
+            self._state["running"] = bool(running)
+            return self._snapshot_locked()
+
+    def activate(self):
+        with self._lock:
+            self._state["active"] = True
+            self._state["running"] = False
+            return self._snapshot_locked()
+
+    def deactivate(self):
+        with self._lock:
+            self._state["active"] = False
+            self._state["running"] = False
+            self._state["outputs"] = {name: False for name in self._state["outputs"]}
+            return self._snapshot_locked()
+
+    def is_active(self):
+        with self._lock:
+            return bool(self._state["active"])
+
+    def set_output(self, name, enabled):
+        with self._lock:
+            self._state["outputs"][name] = bool(enabled)
+            return self._snapshot_locked()
+
+
+def ensure_cleaning_recipe():
+    target = RECIPE_DIR / "Cleaning.json"
+    if target.exists():
+        return
+    target.write_text(json.dumps(DEFAULT_CLEANING_RECIPE, indent=2) + "\n", encoding="utf-8")
+
+
 def emit_machine_event(event, payload):
     socketio.emit(event, payload)
+
+
+usage_stats = UsageStatsStore(STATS_PATH)
+cleaning_session = CleaningSession()
+
+
+def get_usage_stats_store():
+    return app.config.get("USAGE_STATS", usage_stats)
+
+
+def get_cleaning_session():
+    return app.config.get("CLEANING_SESSION", cleaning_session)
+
+
+def usage_stats_payload(payload=None):
+    stats = payload if isinstance(payload, dict) else get_usage_stats_store().load()
+    response = dict(stats)
+    response["requires_cleaning"] = bool(response.get("prints_since_cleaning", 0))
+    response["can_defer_cleaning"] = int(response.get("prints_since_cleaning", 0)) < 3
+    return response
+
+
+def emit_usage_stats(payload=None):
+    emit_machine_event("usage_stats", usage_stats_payload(payload))
+
+
+def emit_cleaning_state(payload=None):
+    state = payload if isinstance(payload, dict) else get_cleaning_session().get_state()
+    emit_machine_event("cleaning_state", state)
+
+
+def apply_cleaning_output(name, enabled):
+    config = current_machine_config()
+    if name == "vacuum":
+        get_hardware().set_output_pin("vacuum_relay", bool(enabled))
+    else:
+        get_marlin().send_command(
+            config.pin_command(name, bool(enabled)),
+            timeout=config.command_timeout_s,
+        )
+    relay_state = dict(get_cleaning_session().get_state()["outputs"])
+    relay_state[name] = bool(enabled)
+    emit_machine_event("relay_update", relay_state)
+    return relay_state
+
+
+def clear_cleaning_outputs():
+    errors = []
+    for output_name in ("pump", "heater", "flow_stop", "vacuum"):
+        desired = False
+        if output_name == "flow_stop":
+            desired = True
+        try:
+            apply_cleaning_output(output_name, desired)
+        except Exception as exc:
+            errors.append(str(exc))
+    if errors:
+        raise RuntimeError("; ".join(errors))
+
+
+def deactivate_cleaning_mode(clear_outputs=True):
+    state = get_cleaning_session().deactivate()
+    if clear_outputs:
+        clear_cleaning_outputs()
+    emit_cleaning_state(state)
+    emit_hardware_state()
+    return get_cleaning_session().get_state()
+
+
+def handle_print_job_complete(job_id, recipe, recipe_name, moving_only):
+    normalized_name = str(recipe_name or "").strip().lower()
+    if moving_only and normalized_name == "cleaning":
+        stats = get_usage_stats_store().record_cleaning_success()
+        state = get_cleaning_session().activate()
+        emit_usage_stats(stats)
+        emit_cleaning_state(state)
+        emit_machine_event(
+            "cleaning_complete",
+            {"job_id": job_id, "recipe": recipe_name or "Cleaning", "stats": usage_stats_payload(stats)},
+        )
+        emit_machine_event(
+            "server_status",
+            {"status": "cleaning_ready", "message": "Cleaning mode ready. Manual controls unlocked."},
+        )
+        return
+
+    if moving_only:
+        return
+
+    stats = get_usage_stats_store().record_print_success()
+    emit_usage_stats(stats)
+    emit_machine_event("print_complete", {"job_id": job_id, "stats": usage_stats_payload(stats)})
 
 
 marlin = MarlinUART(
@@ -57,6 +224,7 @@ print_manager = PrintJobManager(
     hardware,
     config=machine_config,
     emit_event=emit_machine_event,
+    on_job_complete=handle_print_job_complete,
 )
 relay_sequencer = RelaySequencer(
     marlin,
@@ -64,6 +232,8 @@ relay_sequencer = RelaySequencer(
     config=machine_config,
     emit_event=emit_machine_event,
 )
+
+ensure_cleaning_recipe()
 
 
 def get_print_manager():
@@ -140,6 +310,10 @@ def apply_case_led_output():
 def handle_system_state_change(system_enabled, payload):
     if not system_enabled:
         try:
+            deactivate_cleaning_mode(clear_outputs=True)
+        except Exception:
+            pass
+        try:
             get_relay_sequencer().stop()
         except Exception:
             pass
@@ -185,6 +359,12 @@ def require_machine_idle():
     if getattr(get_relay_sequencer(), "is_active", lambda: False)():
         return jsonify({"error": "Foam recipe is active"}), 409
     return None
+
+
+def require_cleaning_active():
+    if get_cleaning_session().is_active():
+        return None
+    return jsonify({"error": "Cleaning mode is not active"}), 409
 
 
 def debug_guard_state():
@@ -280,6 +460,8 @@ def get_debug_snapshot():
         "marlin": marlin_state,
         "guards": debug_guard_state(),
         "issues": collect_debug_issues(),
+        "cleaning_state": get_cleaning_session().get_state(),
+        "usage_stats": usage_stats_payload(),
     }
 
 
@@ -371,6 +553,16 @@ def set_case_led():
 def list_recipes():
     recipes = sorted(path.stem for path in RECIPE_DIR.glob("*.json"))
     return jsonify({"recipes": recipes})
+
+
+@app.get("/api/usage-stats")
+def get_usage_stats():
+    return jsonify(usage_stats_payload())
+
+
+@app.get("/api/cleaning/state")
+def get_cleaning_state():
+    return jsonify(get_cleaning_session().get_state())
 
 
 @app.get("/api/presets")
@@ -519,6 +711,7 @@ def start_print():
 
     payload = request.get_json(silent=True) or {}
     gcode = payload.get("gcode")
+    moving_only = bool(payload.get("moving_only"))
     if not isinstance(gcode, list):
         return jsonify({"error": "gcode must be a list of commands"}), 400
 
@@ -536,20 +729,116 @@ def start_print():
     except (ValueError, RecipeValidationError) as exc:
         return jsonify({"error": str(exc)}), 400
 
+    if get_cleaning_session().is_active():
+        try:
+            deactivate_cleaning_mode(clear_outputs=True)
+        except Exception as exc:
+            return jsonify({"error": f"Cleaning outputs could not be reset: {exc}"}), 409
+
     try:
-        job_id = get_print_manager().start_print(gcode, recipe=recipe, recipe_name=recipe_name)
+        job_id = get_print_manager().start_print(
+            gcode,
+            recipe=recipe,
+            recipe_name=recipe_name,
+            moving_only=moving_only,
+        )
     except ValueError as exc:
         return jsonify({"error": str(exc)}), 400
     except PrintJobBusyError as exc:
         return jsonify({"error": str(exc)}), 409
 
-    return jsonify({"job_id": job_id, "status": "started"}), 202
+    return jsonify({"job_id": job_id, "status": "started", "moving_only": moving_only}), 202
 
 
 @app.post("/api/abort")
 def abort_print():
     job_id = get_print_manager().abort()
     return jsonify({"job_id": job_id, "status": "aborted"})
+
+
+@app.post("/api/cleaning/start")
+def start_cleaning():
+    guard = require_system_enabled()
+    if guard is not None:
+        return guard
+
+    tank_guard = require_tank_ready()
+    if tank_guard is not None:
+        return tank_guard
+
+    idle_guard = require_machine_idle()
+    if idle_guard is not None:
+        return idle_guard
+
+    ensure_cleaning_recipe()
+    config = current_machine_config()
+    center_x, center_y = config.print_center
+    try:
+        recipe, _target = load_recipe_from_name("Cleaning")
+        state = get_cleaning_session().set_running(True)
+        emit_cleaning_state(state)
+        gcode = [
+            f"G0 X{center_x:.3f} Y{center_y:.3f} F1800",
+            "G0 Z0.000 F300",
+        ]
+        job_id = get_print_manager().start_print(
+            gcode,
+            recipe=recipe,
+            recipe_name="Cleaning",
+            moving_only=True,
+        )
+    except FileNotFoundError:
+        emit_cleaning_state(get_cleaning_session().deactivate())
+        return jsonify({"error": "Cleaning recipe not found"}), 404
+    except (ValueError, RecipeValidationError) as exc:
+        emit_cleaning_state(get_cleaning_session().deactivate())
+        return jsonify({"error": str(exc)}), 400
+    except PrintJobBusyError as exc:
+        emit_cleaning_state(get_cleaning_session().deactivate())
+        return jsonify({"error": str(exc)}), 409
+
+    return jsonify({"job_id": job_id, "status": "started", "recipe": "Cleaning"}), 202
+
+
+@app.post("/api/cleaning/output")
+def set_cleaning_output():
+    guard = require_system_enabled()
+    if guard is not None:
+        return guard
+    active_guard = require_cleaning_active()
+    if active_guard is not None:
+        return active_guard
+
+    payload = request.get_json(silent=True) or {}
+    name = str(payload.get("name", "")).strip().lower()
+    if name not in {"pump", "heater", "flow_stop", "vacuum"}:
+        return jsonify({"error": "name must be one of: pump, heater, flow_stop, vacuum"}), 400
+    if "enabled" not in payload:
+        return jsonify({"error": "enabled must be provided"}), 400
+
+    try:
+        apply_cleaning_output(name, bool(payload.get("enabled")))
+        state = get_cleaning_session().set_output(name, bool(payload.get("enabled")))
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 409
+
+    emit_cleaning_state(state)
+    emit_hardware_state()
+    return jsonify(state)
+
+
+@app.post("/api/cleaning/stop")
+def stop_cleaning():
+    active_guard = require_cleaning_active()
+    if active_guard is not None:
+        return active_guard
+
+    try:
+        state = deactivate_cleaning_mode(clear_outputs=True)
+    except Exception as exc:
+        return jsonify({"error": str(exc)}), 409
+
+    return jsonify({"status": "stopped", "cleaning": state})
 
 
 @app.post("/api/motion/home")
@@ -850,6 +1139,8 @@ def handle_connect():
     emit("hardware_inputs", get_hardware().get_hardware_state())
     emit("tank_status", get_hardware().get_tank_state())
     emit("machine_config", current_machine_config().machine_config_payload(tank=get_hardware().get_tank_state()))
+    emit("usage_stats", usage_stats_payload())
+    emit("cleaning_state", get_cleaning_session().get_state())
     emit("debug_snapshot", get_debug_snapshot())
 
 
