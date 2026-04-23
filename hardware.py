@@ -25,6 +25,8 @@ class HardwareController:
         self._poll_stop = threading.Event()
         self._input_states = {}
         self._input_state_lock = threading.Lock()
+        self._input_timestamps = {}
+        self._output_timestamps = {}
         self._case_led_enabled = bool(getattr(config, "case_led_enabled", False))
         self._case_led_output_active = False
         self._tank_led_pwm = None
@@ -33,6 +35,7 @@ class HardwareController:
         self._tank_servo_angle = None
         self._tank_fault = None
         self._last_tank_signature = None
+        self._gpio_error = None
         if initialize:
             self.initialize()
 
@@ -42,13 +45,17 @@ class HardwareController:
         self._gpio = None
         self._gpio_ready = False
         self.config_error = None
+        self._gpio_error = None
         self._tank_fault = None
         self._last_tank_signature = None
         self._tank_servo_connected = False
         self._tank_servo_angle = None
         self._teardown_gpio_pwm()
         self._input_states = {name: False for name in getattr(self.config, "input_pins", {})}
+        now = time.monotonic()
+        self._input_timestamps = {name: now for name in getattr(self.config, "input_pins", {})}
         self.relays = {name: False for name in getattr(self.config, "output_pins", {})}
+        self._output_timestamps = {name: now for name in getattr(self.config, "output_pins", {})}
         self._init_gpio()
         self._init_tof()
         self._init_led()
@@ -104,6 +111,7 @@ class HardwareController:
         except Exception as exc:
             self._gpio = None
             self._gpio_ready = False
+            self._gpio_error = str(exc)
             self._mark_config_error(f"GPIO inputs not configured: {exc}")
 
     def _init_tof(self):
@@ -276,6 +284,7 @@ class HardwareController:
             if previous == active:
                 return
             self._input_states[name] = active
+            self._input_timestamps[name] = time.monotonic()
         self._handle_input_change(name, active)
 
     def _handle_input_change(self, name, active):
@@ -336,6 +345,7 @@ class HardwareController:
         pin = self.config.output_pins[pin_name]
         active = pin.output_value(enabled)
         self.relays[pin_name] = bool(enabled)
+        self._output_timestamps[pin_name] = time.monotonic()
         if not self._gpio_ready:
             return False
         self._gpio.output(pin.board_pin, self._gpio.HIGH if active else self._gpio.LOW)
@@ -449,6 +459,32 @@ class HardwareController:
     def get_hardware_state(self):
         with self._input_state_lock:
             system_switch_closed = bool(self._input_states.get("system_switch", False))
+            input_values = dict(self._input_states)
+            input_timestamps = dict(self._input_timestamps)
+        outputs = {}
+        for name, pin in self.config.output_pins.items():
+            outputs[name] = {
+                "name": name,
+                "board_pin": pin.board_pin,
+                "bcm_pin": pin.bcm_pin,
+                "active_high": bool(pin.active_high),
+                "enabled": bool(self.relays.get(name, False)),
+                "gpio_ready": bool(self._gpio_ready),
+                "last_changed_monotonic": self._output_timestamps.get(name),
+            }
+        inputs = {}
+        for name, pin in self.config.input_pins.items():
+            active = bool(input_values.get(name, False))
+            inputs[name] = {
+                "name": name,
+                "board_pin": pin.board_pin,
+                "bcm_pin": pin.bcm_pin,
+                "pull_up": bool(pin.pull_up),
+                "active_low": bool(pin.active_low),
+                "active": active,
+                "raw_value": (not active) if pin.active_low else active,
+                "last_changed_monotonic": input_timestamps.get(name),
+            }
         return {
             "system_enabled": not system_switch_closed,
             "system_switch_closed": system_switch_closed,
@@ -456,6 +492,13 @@ class HardwareController:
             "case_led_enabled": bool(self._case_led_enabled),
             "case_led_output_active": bool(self._case_led_output_active),
             "output_states": dict(self.relays),
+            "inputs": inputs,
+            "outputs": outputs,
+            "gpio": {
+                "ready": bool(self._gpio_ready),
+                "error": self._gpio_error,
+            },
+            "config_error": self.config_error,
             "tank_present": self._tank_present(),
         }
 

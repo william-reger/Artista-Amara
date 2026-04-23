@@ -35,10 +35,38 @@ class FakeMarlin:
     def __init__(self):
         self.commands = []
         self.timeout = None
+        self.debug_state = {
+            "connected": False,
+            "port": "/dev/serial0",
+            "baudrate": 115200,
+            "timeout": 2,
+            "last_command": None,
+            "last_response_lines": [],
+            "last_error": None,
+            "last_error_type": None,
+            "last_test": None,
+        }
 
     def send_command(self, line, timeout=None):
         self.commands.append(line)
+        self.debug_state["connected"] = True
+        self.debug_state["last_command"] = line
+        self.debug_state["last_response_lines"] = ["ok"]
+        self.debug_state["last_error"] = None
+        self.debug_state["last_error_type"] = None
         return ["ok"]
+
+    def get_debug_state(self):
+        return dict(self.debug_state)
+
+    def mark_test_result(self, name, success, command=None, responses=None, error=None):
+        self.debug_state["last_test"] = {
+            "name": name,
+            "success": success,
+            "command": command,
+            "responses": list(responses or []),
+            "error": error,
+        }
 
 
 class FakeRelaySequencer:
@@ -95,6 +123,7 @@ class FakeHardware:
         self.system_enabled = system_enabled
         self.angle = None
         self.case_led_enabled = False
+        self.output_states = {"vacuum_relay": False}
 
     def get_system_enabled(self):
         return self.system_enabled
@@ -106,7 +135,32 @@ class FakeHardware:
             "quick_buttons": {},
             "case_led_enabled": self.case_led_enabled,
             "case_led_output_active": self.case_led_enabled and self.system_enabled,
-            "output_states": {},
+            "output_states": dict(self.output_states),
+            "inputs": {
+                "system_switch": {
+                    "name": "system_switch",
+                    "board_pin": 7,
+                    "bcm_pin": 4,
+                    "pull_up": True,
+                    "active_low": True,
+                    "active": not self.system_enabled,
+                    "raw_value": self.system_enabled,
+                    "last_changed_monotonic": 0.0,
+                }
+            },
+            "outputs": {
+                "vacuum_relay": {
+                    "name": "vacuum_relay",
+                    "board_pin": 23,
+                    "bcm_pin": 11,
+                    "active_high": True,
+                    "enabled": bool(self.output_states["vacuum_relay"]),
+                    "gpio_ready": True,
+                    "last_changed_monotonic": 0.0,
+                }
+            },
+            "gpio": {"ready": True, "error": None},
+            "config_error": None,
             "tank_present": self.tank_present,
         }
 
@@ -142,6 +196,7 @@ class FakeHardware:
         return self.get_hardware_state()
 
     def set_output_pin(self, pin_name, enabled):
+        self.output_states[pin_name] = bool(enabled)
         return True
 
     def set_servo_angle(self, angle):
@@ -463,6 +518,82 @@ class AppSocketIOTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(marlin.commands, ["G91", "G0 X-5.000 F1800", "G90"])
 
+    def test_debug_state_returns_snapshot(self):
+        marlin = FakeMarlin()
+        app.config["MARLIN"] = marlin
+        client = app.test_client()
+
+        response = client.get("/api/debug/state")
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        self.assertIn("hardware", payload)
+        self.assertIn("relay_state", payload)
+        self.assertIn("tank_state", payload)
+        self.assertIn("marlin", payload)
+        self.assertIn("guards", payload)
+        self.assertIn("issues", payload)
+        self.assertIn("inputs", payload["hardware"])
+        self.assertIn("outputs", payload["hardware"])
+
+    def test_debug_uart_command_runs_manual_command(self):
+        marlin = FakeMarlin()
+        app.config["MARLIN"] = marlin
+        client = app.test_client()
+
+        response = client.post("/api/debug/uart/command", json={"command": "M114"})
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        self.assertEqual(payload["command"], "M114")
+        self.assertEqual(payload["responses"], ["ok"])
+        self.assertIn("M114", marlin.commands)
+
+    def test_debug_uart_command_requires_idle_and_system_enabled(self):
+        manager = FakePrintManager()
+        manager.active = True
+        app.config["PRINT_MANAGER"] = manager
+        client = app.test_client()
+
+        response = client.post("/api/debug/uart/command", json={"command": "M114"})
+
+        self.assertEqual(response.status_code, 409)
+        self.assertIn("Print job is active", response.get_json()["error"])
+
+    def test_debug_uart_test_runs_predefined_command(self):
+        marlin = FakeMarlin()
+        app.config["MARLIN"] = marlin
+        client = app.test_client()
+
+        response = client.post("/api/debug/uart/test", json={"name": "position"})
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        self.assertEqual(payload["command"], "M114")
+        self.assertEqual(marlin.debug_state["last_test"]["name"], "position")
+
+    def test_debug_output_uses_gpio_for_vacuum(self):
+        hardware = FakeHardware()
+        app.config["HARDWARE"] = hardware
+        client = app.test_client()
+
+        response = client.post("/api/debug/output", json={"name": "vacuum", "enabled": True})
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_json()
+        self.assertEqual(payload["result"]["target"], "gpio")
+        self.assertTrue(hardware.output_states["vacuum_relay"])
+
+    def test_debug_output_uses_marlin_for_control_pin(self):
+        marlin = FakeMarlin()
+        app.config["MARLIN"] = marlin
+        client = app.test_client()
+
+        response = client.post("/api/debug/output", json={"name": "pump", "enabled": True})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("M42 P29 S255", marlin.commands)
+
     def test_socketio_connect_and_ping(self):
         client = socketio.test_client(app)
         self.assertTrue(client.is_connected())
@@ -479,6 +610,7 @@ class AppSocketIOTest(unittest.TestCase):
         self.assertTrue(any(event["name"] == "foam_status" for event in received))
         self.assertTrue(any(event["name"] == "tank_status" for event in received))
         self.assertTrue(any(event["name"] == "machine_config" for event in received))
+        self.assertTrue(any(event["name"] == "debug_snapshot" for event in received))
 
         client.emit("client_ping", {"timestamp": 123})
         received = client.get_received()

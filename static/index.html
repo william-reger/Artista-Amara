@@ -714,6 +714,119 @@
       font-size: 0.86rem;
     }
 
+    .debug-panel {
+      display: grid;
+      gap: 0.82rem;
+    }
+
+    .debug-section {
+      padding: 0.85rem;
+      border-radius: var(--radius-sm);
+      background: rgba(255, 255, 255, 0.68);
+      box-shadow: inset 0 0 0 1px rgba(211, 195, 192, 0.18);
+    }
+
+    .debug-section strong {
+      display: block;
+      margin-bottom: 0.55rem;
+      font-size: 0.78rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .debug-grid {
+      display: grid;
+      gap: 0.48rem;
+    }
+
+    .debug-pin-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) auto;
+      gap: 0.7rem;
+      align-items: center;
+      padding: 0.68rem 0.75rem;
+      border-radius: var(--radius-sm);
+      background: rgba(39, 19, 16, 0.06);
+    }
+
+    .debug-pin-meta {
+      display: block;
+      margin-top: 0.2rem;
+      color: rgba(39, 19, 16, 0.58);
+      font-size: 0.77rem;
+      line-height: 1.35;
+    }
+
+    .debug-pin-status {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 4.8rem;
+      padding: 0.35rem 0.55rem;
+      border-radius: 999px;
+      font-size: 0.74rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: rgba(39, 19, 16, 0.1);
+      color: rgba(39, 19, 16, 0.78);
+    }
+
+    .debug-pin-status.active {
+      background: rgba(82, 153, 104, 0.18);
+      color: #1f5b2b;
+    }
+
+    .debug-actions-stack {
+      display: grid;
+      gap: 0.62rem;
+    }
+
+    .debug-console-output {
+      min-height: 8rem;
+      max-height: 14rem;
+      overflow: auto;
+      margin-top: 0.72rem;
+      padding: 0.82rem 0.9rem;
+      border-radius: var(--radius-sm);
+      background: #1f100e;
+      color: #fff2e4;
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+      font-size: 0.8rem;
+      line-height: 1.45;
+      white-space: pre-wrap;
+    }
+
+    .debug-console-output:empty::before {
+      content: "No UART responses yet.";
+      color: rgba(255, 242, 228, 0.52);
+    }
+
+    .debug-issue-list {
+      display: grid;
+      gap: 0.48rem;
+    }
+
+    .debug-issue {
+      padding: 0.72rem 0.78rem;
+      border-radius: var(--radius-sm);
+      background: rgba(217, 102, 82, 0.12);
+      color: #5f241c;
+      box-shadow: inset 0 0 0 1px rgba(217, 102, 82, 0.18);
+    }
+
+    .debug-issue strong,
+    .debug-issue span {
+      display: block;
+    }
+
+    .debug-issue strong {
+      margin-bottom: 0.2rem;
+      font-size: 0.72rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
     .preview-stage {
       position: relative;
       aspect-ratio: 1;
@@ -1755,6 +1868,33 @@
             <button id="caseLedToggleButton" class="advanced-button primary" type="button">Turn Case LED On</button>
           </div>
         </div>
+        <div class="advanced-card">
+          <strong>Diagnostics</strong>
+          <div class="debug-panel">
+            <div class="debug-section">
+              <strong>Debug Issues</strong>
+              <div id="debugIssuesList" class="debug-issue-list"></div>
+            </div>
+            <div class="debug-section">
+              <strong>GPIO Live</strong>
+              <div id="debugGuards" class="helper-text">Loading diagnostics...</div>
+              <div id="debugInputsList" class="debug-grid"></div>
+              <div id="debugOutputsList" class="debug-grid"></div>
+            </div>
+            <div class="debug-section">
+              <strong>UART Console</strong>
+              <div class="debug-actions-stack">
+                <button id="debugUartTestButton" class="advanced-button primary" type="button">Run UART Test</button>
+                <label class="mode-field">
+                  <span class="mode-label">Raw Marlin Command</span>
+                  <input id="debugUartCommandInput" class="mode-input" type="text" placeholder="M114">
+                </label>
+                <button id="debugUartSendButton" class="advanced-button" type="button">Send Raw Command</button>
+              </div>
+              <div id="debugUartOutput" class="debug-console-output"></div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -1847,6 +1987,14 @@
     const caseLedPhysicalValue = document.getElementById("caseLedPhysicalValue");
     const caseLedHint = document.getElementById("caseLedHint");
     const caseLedToggleButton = document.getElementById("caseLedToggleButton");
+    const debugIssuesList = document.getElementById("debugIssuesList");
+    const debugGuards = document.getElementById("debugGuards");
+    const debugInputsList = document.getElementById("debugInputsList");
+    const debugOutputsList = document.getElementById("debugOutputsList");
+    const debugUartTestButton = document.getElementById("debugUartTestButton");
+    const debugUartCommandInput = document.getElementById("debugUartCommandInput");
+    const debugUartSendButton = document.getElementById("debugUartSendButton");
+    const debugUartOutput = document.getElementById("debugUartOutput");
     const touchInfoPopover = document.getElementById("touchInfoPopover");
 
     const previewNote = document.getElementById("previewNote");
@@ -1952,11 +2100,18 @@
       machineConfig: null,
       tankStatus: "Unknown",
       tankState: null,
+      debugSnapshot: null,
+      debugGuards: null,
+      debugIssuesRemote: [],
+      uartResponses: [],
       hardwareState: {
         system_enabled: true,
         quick_buttons: {},
         case_led_enabled: false,
-        case_led_output_active: false
+        case_led_output_active: false,
+        inputs: {},
+        outputs: {},
+        gpio: { ready: false, error: null }
       }
     };
 
@@ -2109,6 +2264,89 @@
       updateReadouts();
     }
 
+    function appendUartLines(lines) {
+      const incoming = Array.isArray(lines) ? lines.filter(Boolean) : [];
+      if (!incoming.length) {
+        return;
+      }
+      state.uartResponses = state.uartResponses.concat(incoming).slice(-40);
+      debugUartOutput.textContent = state.uartResponses.join("\n");
+    }
+
+    function renderDebugPanel() {
+      const guards = state.debugGuards || { system_enabled: false, print_active: false, foam_active: false, writes_allowed: false };
+      const issues = Array.isArray(state.debugIssuesRemote) ? state.debugIssuesRemote : [];
+      const inputEntries = Object.values((state.hardwareState && state.hardwareState.inputs) || {});
+      const outputEntries = Object.values((state.hardwareState && state.hardwareState.outputs) || {});
+
+      debugGuards.textContent =
+        "System " + (guards.system_enabled ? "enabled" : "off") +
+        " | Print " + (guards.print_active ? "active" : "idle") +
+        " | Foam " + (guards.foam_active ? "active" : "idle") +
+        " | Debug writes " + (guards.writes_allowed ? "allowed" : "locked");
+
+      debugIssuesList.innerHTML = issues.length
+        ? issues.map((issue) => (
+            '<div class="debug-issue">' +
+              '<strong>' + escapeHtml(issue.category || "Issue") + '</strong>' +
+              '<span>' + escapeHtml(issue.message || "Unknown issue") + '</span>' +
+            '</div>'
+          )).join("")
+        : '<div class="helper-text">No active debug issues.</div>';
+
+      debugInputsList.innerHTML = inputEntries.length
+        ? inputEntries.map((pin) => (
+            '<div class="debug-pin-row">' +
+              '<div><strong>' + escapeHtml(pin.name) + '</strong><span class="debug-pin-meta">Board ' + escapeHtml(pin.board_pin) + ' / BCM ' + escapeHtml(pin.bcm_pin ?? "--") + ' | active_low ' + escapeHtml(pin.active_low ? "yes" : "no") + '</span></div>' +
+              '<span class="debug-pin-status' + (pin.active ? ' active' : '') + '">' + (pin.active ? 'Active' : 'Idle') + '</span>' +
+            '</div>'
+          )).join("")
+        : '<div class="helper-text">No GPIO inputs configured.</div>';
+
+      debugOutputsList.innerHTML = outputEntries.length
+        ? outputEntries.map((pin) => (
+            '<div class="debug-pin-row">' +
+              '<div><strong>' + escapeHtml(pin.name) + '</strong><span class="debug-pin-meta">Board ' + escapeHtml(pin.board_pin) + ' / BCM ' + escapeHtml(pin.bcm_pin ?? "--") + ' | active_high ' + escapeHtml(pin.active_high ? "yes" : "no") + '</span></div>' +
+              '<div class="advanced-actions">' +
+                '<span class="debug-pin-status' + (pin.enabled ? ' active' : '') + '">' + (pin.enabled ? 'On' : 'Off') + '</span>' +
+                '<button class="advanced-button" type="button" data-debug-output="' + escapeHtml(pin.name) + '" data-debug-enabled="' + escapeHtml(pin.enabled ? "false" : "true") + '"' + (guards.writes_allowed ? "" : " disabled") + '>' + (pin.enabled ? 'Turn Off' : 'Turn On') + '</button>' +
+              '</div>' +
+            '</div>'
+          )).join("")
+        : '<div class="helper-text">No GPIO outputs configured.</div>';
+    }
+
+    function applyDebugSnapshot(payload) {
+      if (!payload) {
+        return;
+      }
+      state.debugSnapshot = payload;
+      state.debugGuards = payload.guards || null;
+      state.debugIssuesRemote = Array.isArray(payload.issues) ? payload.issues : [];
+      if (payload.hardware) {
+        applyHardwareState(payload.hardware);
+      }
+      if (payload.tank_state) {
+        state.tankState = payload.tank_state;
+        state.tankStatus = formatTankState(payload.tank_state);
+        tankValue.textContent = state.tankStatus;
+      }
+      if (payload.relay_state) {
+        state.relayState = payload.relay_state;
+        relayValue.textContent = Object.keys(state.relayState).length
+          ? Object.entries(state.relayState).map(([key, value]) => key + ":" + (value ? "on" : "off")).join(" ")
+          : "Idle";
+      }
+      if (payload.marlin) {
+        state.marlinConnected = !!payload.marlin.connected;
+        if (payload.marlin.last_response_lines && payload.marlin.last_response_lines.length) {
+          appendUartLines(payload.marlin.last_response_lines);
+        }
+      }
+      renderDebugPanel();
+      updateReadouts();
+    }
+
     function updateAdvancedVisibility() {
       advancedPanel.hidden = !state.advancedOpen;
       logoWrap.setAttribute("aria-pressed", state.advancedOpen ? "true" : "false");
@@ -2117,6 +2355,7 @@
         loadRecipeList();
         loadMachineConfig();
         readTof();
+        loadDebugState();
       }
     }
 
@@ -2175,6 +2414,7 @@
           state.marlinMessage = payload.msg;
           state.marlinConnected = !/error|timeout|failed/i.test(payload.msg);
           marlinValue.textContent = payload.msg;
+          appendUartLines([payload.msg]);
           setStatus("Marlin: " + payload.msg, state.printing ? "Printing" : "Ready");
         }
       });
@@ -2214,6 +2454,10 @@
         applyHardwareState(payload);
       });
 
+      socket.on("debug_snapshot", (payload) => {
+        applyDebugSnapshot(payload);
+      });
+
       socket.on("quick_button", (payload) => {
         if (payload && payload.name) {
           setBackendStatus("connected", payload.name + (payload.pressed ? " pressed" : " released"));
@@ -2231,6 +2475,7 @@
         relayValue.textContent = Object.keys(state.relayState).length
           ? Object.entries(state.relayState).map(([key, value]) => key + ":" + (value ? "on" : "off")).join(" ")
           : "Idle";
+        renderDebugPanel();
       });
     }
 
@@ -2461,6 +2706,7 @@
               ? "Adjust"
               : "Waiting";
       renderWarningBanners();
+      renderDebugPanel();
       updateMachineStatus();
     }
 
@@ -3508,6 +3754,9 @@
         : "System switch is off. The case LED remains physically off until the switch is enabled again.";
       caseLedToggleButton.disabled = !state.hardwareState.system_enabled && !state.hardwareState.case_led_enabled;
       caseLedToggleButton.textContent = state.hardwareState.case_led_enabled ? "Turn Case LED Off" : "Turn Case LED On";
+      if (state.hardwareState.gpio && !state.hardwareState.gpio.ready && state.hardwareState.gpio.error) {
+        rememberDebugIssue(state.hardwareState.gpio.error);
+      }
       updateReadouts();
     }
 
@@ -3946,6 +4195,93 @@
       }
     }
 
+    async function loadDebugState() {
+      try {
+        const response = await fetch("/api/debug/state");
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload.error || "Debug state could not be loaded.");
+        }
+        applyDebugSnapshot(payload);
+        return payload;
+      } catch (error) {
+        setWarning(error.message || "Debug state could not be loaded.", "warning");
+      }
+    }
+
+    async function runDebugUartTest() {
+      try {
+        const response = await fetch("/api/debug/uart/test", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: "ping" })
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload.error || "UART test failed.");
+        }
+        appendUartLines(["$ " + payload.command].concat(payload.responses || []));
+        if (payload.debug) {
+          applyDebugSnapshot(payload.debug);
+        }
+        clearWarning(/uart|marlin|serial/i);
+        setStatus("UART test finished.", "Ready");
+      } catch (error) {
+        setWarning(error.message || "UART test failed.", "warning");
+      }
+    }
+
+    async function sendDebugUartCommand() {
+      const command = (debugUartCommandInput.value || "").trim();
+      if (!command) {
+        setWarning("Enter a raw UART command first.", "warning");
+        return;
+      }
+      try {
+        const response = await fetch("/api/debug/uart/command", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ command })
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload.error || "UART command failed.");
+        }
+        appendUartLines(["$ " + command].concat(payload.responses || []));
+        if (payload.debug) {
+          applyDebugSnapshot(payload.debug);
+        }
+        debugUartCommandInput.value = "";
+        clearWarning(/uart|marlin|serial/i);
+        setStatus("UART command sent.", "Ready");
+      } catch (error) {
+        appendUartLines(["$ " + command, "! " + (error.message || "UART command failed.")]);
+        setWarning(error.message || "UART command failed.", "warning");
+      }
+    }
+
+    async function toggleDebugOutput(name, enabled) {
+      try {
+        const response = await fetch("/api/debug/output", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, enabled })
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload.error || "Debug output could not be changed.");
+        }
+        if (payload.debug) {
+          applyDebugSnapshot(payload.debug);
+        } else {
+          await loadDebugState();
+        }
+        setStatus(name + " set to " + (enabled ? "on" : "off") + ".", "Ready");
+      } catch (error) {
+        setWarning(error.message || "Debug output could not be changed.", "warning");
+      }
+    }
+
     async function homeMachine() {
       try {
         const response = await fetch("/api/motion/home", { method: "POST" });
@@ -4072,6 +4408,21 @@
     saveRecipeButton.addEventListener("click", saveRecipe);
     reloadMachineConfigButton.addEventListener("click", loadMachineConfig);
     saveMachineConfigButton.addEventListener("click", saveMachineConfig);
+    debugUartTestButton.addEventListener("click", runDebugUartTest);
+    debugUartSendButton.addEventListener("click", sendDebugUartCommand);
+    debugUartCommandInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        sendDebugUartCommand();
+      }
+    });
+    debugOutputsList.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-debug-output]");
+      if (!button) {
+        return;
+      }
+      toggleDebugOutput(button.dataset.debugOutput, button.dataset.debugEnabled === "true");
+    });
     tofReadButton.addEventListener("click", readTof);
     homeAllButton.addEventListener("click", homeMachine);
     document.querySelectorAll("[data-jog-axis]").forEach((button) => {
@@ -4103,6 +4454,7 @@
     applyCupScale();
     drawMachineCanvas();
     renderCupPreview();
+    loadDebugState();
     updateReadouts();
   </script>
 </body>

@@ -40,6 +40,72 @@ class MarlinUART:
         self._worker = None
         self._stop_worker = threading.Event()
         self._worker_lock = threading.Lock()
+        self._debug_lock = threading.Lock()
+        self._debug_state = {
+            "connected": False,
+            "port": self.port,
+            "baudrate": self.baudrate,
+            "timeout": self.timeout,
+            "last_command": None,
+            "last_response_lines": [],
+            "last_error": None,
+            "last_error_type": None,
+            "last_activity_monotonic": None,
+            "last_success_monotonic": None,
+            "last_test": None,
+        }
+
+    def _update_debug_state(self, **updates):
+        with self._debug_lock:
+            self._debug_state.update(updates)
+
+    def _record_activity(self):
+        self._update_debug_state(last_activity_monotonic=time.monotonic())
+
+    def _record_success(self, line, responses):
+        now = time.monotonic()
+        self._update_debug_state(
+            connected=True,
+            last_command=line,
+            last_response_lines=list(responses),
+            last_error=None,
+            last_error_type=None,
+            last_activity_monotonic=now,
+            last_success_monotonic=now,
+        )
+
+    def _record_error(self, line, exc):
+        if isinstance(exc, MarlinTimeoutError):
+            error_type = "timeout"
+        elif isinstance(exc, MarlinError):
+            error_type = "marlin_error"
+        else:
+            error_type = "connection_error"
+        self._update_debug_state(
+            connected=False,
+            last_command=line,
+            last_error=str(exc),
+            last_error_type=error_type,
+            last_activity_monotonic=time.monotonic(),
+        )
+
+    def get_debug_state(self):
+        with self._debug_lock:
+            payload = dict(self._debug_state)
+            payload["last_response_lines"] = list(self._debug_state["last_response_lines"])
+            return payload
+
+    def mark_test_result(self, name, success, command=None, responses=None, error=None):
+        self._update_debug_state(
+            last_test={
+                "name": str(name),
+                "success": bool(success),
+                "command": command,
+                "responses": list(responses or []),
+                "error": error,
+                "timestamp_monotonic": time.monotonic(),
+            }
+        )
 
     def connect(self):
         if self.serial is None:
@@ -57,6 +123,14 @@ class MarlinUART:
                     self.baudrate,
                     timeout=self.timeout,
                 )
+            self._update_debug_state(
+                connected=True,
+                port=self.port,
+                baudrate=self.baudrate,
+                timeout=self.timeout,
+                last_error=None,
+                last_error_type=None,
+            )
         return self.serial
 
     def start(self):
@@ -126,6 +200,7 @@ class MarlinUART:
                     request.timeout,
                 )
             except Exception as exc:
+                self._record_error(request.line, exc)
                 request.error = exc
             finally:
                 request.done.set()
@@ -136,6 +211,13 @@ class MarlinUART:
         serial_port.write((line.strip() + "\n").encode("ascii"))
         serial_port.flush()
         self._emit_status(f">> {line.strip()}")
+        self._update_debug_state(
+            last_command=line.strip(),
+            last_response_lines=[],
+            last_error=None,
+            last_error_type=None,
+        )
+        self._record_activity()
 
         responses = []
         deadline = time.monotonic() + timeout
@@ -150,8 +232,11 @@ class MarlinUART:
 
             responses.append(message)
             self._emit_status(message)
+            self._update_debug_state(last_response_lines=list(responses))
+            self._record_activity()
             lowered = message.lower()
             if lowered == "ok" or lowered.startswith("ok "):
+                self._record_success(line.strip(), responses)
                 return responses
             if lowered.startswith("error") or "error:" in lowered:
                 raise MarlinError(message)

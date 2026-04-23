@@ -95,6 +95,10 @@ def sync_runtime_config(config):
     if hasattr(get_relay_sequencer(), "hardware"):
         get_relay_sequencer().hardware = get_hardware()
     get_hardware().update_config(config)
+    if hasattr(get_marlin(), "port"):
+        get_marlin().port = config.serial_port
+    if hasattr(get_marlin(), "baudrate"):
+        get_marlin().baudrate = config.baudrate
     if hasattr(get_marlin(), "timeout"):
         get_marlin().timeout = config.command_timeout_s
 
@@ -181,6 +185,102 @@ def require_machine_idle():
     if getattr(get_relay_sequencer(), "is_active", lambda: False)():
         return jsonify({"error": "Foam recipe is active"}), 409
     return None
+
+
+def debug_guard_state():
+    return {
+        "system_enabled": bool(get_hardware().get_system_enabled()),
+        "print_active": bool(getattr(get_print_manager(), "is_active", lambda: False)()),
+        "foam_active": bool(getattr(get_relay_sequencer(), "is_active", lambda: False)()),
+        "writes_allowed": bool(
+            get_hardware().get_system_enabled()
+            and not getattr(get_print_manager(), "is_active", lambda: False)()
+            and not getattr(get_relay_sequencer(), "is_active", lambda: False)()
+        ),
+    }
+
+
+def require_debug_write_access():
+    guard = require_system_enabled()
+    if guard is not None:
+        return guard
+    idle_guard = require_machine_idle()
+    if idle_guard is not None:
+        return idle_guard
+    return None
+
+
+def collect_debug_issues():
+    issues = []
+    hardware_state = get_hardware().get_hardware_state()
+    marlin_state = get_marlin().get_debug_state() if hasattr(get_marlin(), "get_debug_state") else {}
+    guards = debug_guard_state()
+
+    gpio_info = hardware_state.get("gpio", {})
+    if not gpio_info.get("ready"):
+        issues.append(
+            {
+                "category": "GPIO",
+                "severity": "error",
+                "message": gpio_info.get("error") or "GPIO not initialized",
+            }
+        )
+    if hardware_state.get("config_error"):
+        issues.append(
+            {
+                "category": "Config",
+                "severity": "error",
+                "message": hardware_state["config_error"],
+            }
+        )
+    if not guards["system_enabled"]:
+        issues.append(
+            {
+                "category": "Safety",
+                "severity": "warning",
+                "message": "System switch is off",
+            }
+        )
+    if guards["print_active"]:
+        issues.append(
+            {
+                "category": "Safety",
+                "severity": "warning",
+                "message": "Print job is active; debug writes are locked",
+            }
+        )
+    if guards["foam_active"]:
+        issues.append(
+            {
+                "category": "Safety",
+                "severity": "warning",
+                "message": "Foam recipe is active; debug writes are locked",
+            }
+        )
+    if marlin_state.get("last_error"):
+        issues.append(
+            {
+                "category": "UART",
+                "severity": "error" if marlin_state.get("last_error_type") != "timeout" else "warning",
+                "message": marlin_state["last_error"],
+            }
+        )
+    return issues
+
+
+def get_debug_snapshot():
+    relay_state = get_relay_sequencer().get_state()
+    hardware_state = get_hardware().get_hardware_state()
+    marlin_state = get_marlin().get_debug_state() if hasattr(get_marlin(), "get_debug_state") else {}
+    return {
+        "hardware": hardware_state,
+        "relay_state": relay_state.get("relay_state", {}),
+        "foam_state": relay_state,
+        "tank_state": get_hardware().get_tank_state(),
+        "marlin": marlin_state,
+        "guards": debug_guard_state(),
+        "issues": collect_debug_issues(),
+    }
 
 
 def safe_recipe_path(name):
@@ -638,6 +738,104 @@ def read_tof():
     return jsonify(payload)
 
 
+@app.get("/api/debug/state")
+def debug_state():
+    return jsonify(get_debug_snapshot())
+
+
+@app.post("/api/debug/uart/test")
+def debug_uart_test():
+    payload = request.get_json(silent=True) or {}
+    test_name = str(payload.get("name", "ping")).strip().lower()
+    command_map = {
+        "ping": "M115",
+        "firmware": "M115",
+        "position": "M114",
+        "home": "G28",
+    }
+    command = command_map.get(test_name, "M115")
+    config = current_machine_config()
+    try:
+        responses = get_marlin().send_command(command, timeout=config.command_timeout_s)
+        if hasattr(get_marlin(), "mark_test_result"):
+            get_marlin().mark_test_result(test_name, True, command=command, responses=responses)
+        snapshot = get_debug_snapshot()
+        emit_machine_event("debug_snapshot", snapshot)
+        return jsonify({"status": "ok", "test": test_name, "command": command, "responses": responses, "debug": snapshot})
+    except Exception as exc:
+        if hasattr(get_marlin(), "mark_test_result"):
+            get_marlin().mark_test_result(test_name, False, command=command, error=str(exc))
+        snapshot = get_debug_snapshot()
+        emit_machine_event("debug_snapshot", snapshot)
+        return jsonify({"error": str(exc), "test": test_name, "command": command, "debug": snapshot}), 409
+
+
+@app.post("/api/debug/uart/command")
+def debug_uart_command():
+    guard = require_debug_write_access()
+    if guard is not None:
+        return guard
+
+    payload = request.get_json(silent=True) or {}
+    command = str(payload.get("command", "")).strip()
+    if not command:
+        return jsonify({"error": "command must not be empty"}), 400
+
+    config = current_machine_config()
+    try:
+        responses = get_marlin().send_command(command, timeout=config.command_timeout_s)
+        snapshot = get_debug_snapshot()
+        emit_machine_event("debug_snapshot", snapshot)
+        return jsonify({"status": "ok", "command": command, "responses": responses, "debug": snapshot})
+    except Exception as exc:
+        snapshot = get_debug_snapshot()
+        emit_machine_event("debug_snapshot", snapshot)
+        return jsonify({"error": str(exc), "command": command, "debug": snapshot}), 409
+
+
+@app.post("/api/debug/output")
+def debug_output():
+    guard = require_debug_write_access()
+    if guard is not None:
+        return guard
+
+    payload = request.get_json(silent=True) or {}
+    name = str(payload.get("name", "")).strip().lower()
+    if not name:
+        return jsonify({"error": "name must be provided"}), 400
+    if "enabled" not in payload:
+        return jsonify({"error": "enabled must be provided"}), 400
+    enabled = bool(payload.get("enabled"))
+
+    config = current_machine_config()
+    try:
+        if name in config.output_pins:
+            written = get_hardware().set_output_pin(name, enabled)
+            result = {"target": "gpio", "written": bool(written)}
+        elif name == "vacuum":
+            written = get_hardware().set_output_pin("vacuum_relay", enabled)
+            result = {"target": "gpio", "written": bool(written), "resolved_name": "vacuum_relay"}
+        elif config.resolve_optional_pin_name(name) in config.pins:
+            resolved = config.resolve_pin_name(name)
+            responses = get_marlin().send_command(
+                config.pin_command(resolved, enabled),
+                timeout=config.command_timeout_s,
+            )
+            if resolved == "case_led":
+                get_hardware().set_case_led_enabled(enabled)
+            result = {"target": "marlin", "responses": responses, "resolved_name": resolved}
+        else:
+            return jsonify({"error": f"unknown debug output: {name}"}), 400
+    except Exception as exc:
+        snapshot = get_debug_snapshot()
+        emit_machine_event("debug_snapshot", snapshot)
+        return jsonify({"error": str(exc), "name": name, "debug": snapshot}), 409
+
+    snapshot = get_debug_snapshot()
+    emit_machine_event("debug_snapshot", snapshot)
+    return jsonify({"status": "ok", "name": name, "enabled": enabled, "result": result, "debug": snapshot})
+
+
 @socketio.on("connect")
 def handle_connect():
     emit(
@@ -652,6 +850,7 @@ def handle_connect():
     emit("hardware_inputs", get_hardware().get_hardware_state())
     emit("tank_status", get_hardware().get_tank_state())
     emit("machine_config", current_machine_config().machine_config_payload(tank=get_hardware().get_tank_state()))
+    emit("debug_snapshot", get_debug_snapshot())
 
 
 @socketio.on("disconnect")

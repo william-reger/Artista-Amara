@@ -43,6 +43,10 @@ class MarlinUARTTest(unittest.TestCase):
         self.assertEqual(responses, ["echo:G28", "ok"])
         self.assertIn(">> G28", statuses)
         self.assertIn("ok", statuses)
+        debug = uart.get_debug_state()
+        self.assertTrue(debug["connected"])
+        self.assertEqual(debug["last_command"], "G28")
+        self.assertEqual(debug["last_response_lines"], ["echo:G28", "ok"])
 
     def test_error_response_raises(self):
         fake = FakeSerial([b"Error:Printer halted\n"])
@@ -53,6 +57,9 @@ class MarlinUARTTest(unittest.TestCase):
 
         with self.assertRaises(MarlinError):
             uart.send_command("G1 X1")
+        debug = uart.get_debug_state()
+        self.assertEqual(debug["last_error_type"], "marlin_error")
+        self.assertIn("Printer halted", debug["last_error"])
         uart.close()
 
     def test_missing_ok_times_out(self):
@@ -64,6 +71,8 @@ class MarlinUARTTest(unittest.TestCase):
 
         with self.assertRaises(MarlinTimeoutError):
             uart.send_command("M400", timeout=0.01)
+        debug = uart.get_debug_state()
+        self.assertEqual(debug["last_error_type"], "timeout")
         uart.close()
 
 

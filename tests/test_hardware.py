@@ -94,6 +94,22 @@ class HardwareControllerTest(unittest.TestCase):
 
         state = hardware.get_hardware_state()
         self.assertTrue(state["output_states"]["vacuum_relay"])
+        self.assertTrue(state["outputs"]["vacuum_relay"]["enabled"])
+        self.assertEqual(state["outputs"]["vacuum_relay"]["board_pin"], 23)
+
+    def test_hardware_state_exposes_gpio_metadata(self):
+        hardware = HardwareController(MachineConfig(), initialize=False)
+        hardware._gpio_ready = False
+        hardware._gpio_error = "RPi.GPIO missing"
+
+        state = hardware.get_hardware_state()
+
+        self.assertIn("inputs", state)
+        self.assertIn("outputs", state)
+        self.assertFalse(state["gpio"]["ready"])
+        self.assertEqual(state["gpio"]["error"], "RPi.GPIO missing")
+        self.assertEqual(state["inputs"]["system_switch"]["board_pin"], 7)
+        self.assertEqual(state["outputs"]["vacuum_relay"]["board_pin"], 23)
 
     def test_tank_missing_reports_fault_free_error_state(self):
         hardware = FakeTankHardware(MachineConfig(), tank_present=False)
